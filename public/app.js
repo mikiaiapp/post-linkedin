@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Botones
   const btnSyncNews = document.getElementById('btn-sync-news');
+  const btnRefreshNewsCard = document.getElementById('btn-refresh-news-card');
   const btnCopyPost = document.getElementById('btn-copy-post');
   const btnSaveProposal = document.getElementById('btn-save-proposal');
   const btnDownloadInfo = document.getElementById('btn-download-infographic');
@@ -399,6 +400,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnSyncNews.addEventListener('click', syncAndLoadNews);
+  if (btnRefreshNewsCard) {
+    btnRefreshNewsCard.addEventListener('click', syncAndLoadNews);
+  }
 
   // Guardar propuesta actual
   btnSaveProposal.addEventListener('click', async () => {

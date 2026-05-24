@@ -29,16 +29,63 @@ if (!fs.existsSync(PROPOSALS_DIR)) {
   fs.mkdirSync(PROPOSALS_DIR);
 }
 
-// Obtener fuentes RSS
+const DEFAULT_SOURCES = [
+  {
+    "name": "Expansión - Economía",
+    "url": "https://www.expansion.com/rss/economia.xml",
+    "category": "Economía General"
+  },
+  {
+    "name": "El Economista - Nacional",
+    "url": "https://www.eleconomista.es/rss/rss-economia.php",
+    "category": "Economía General"
+  },
+  {
+    "name": "Cinco Días - Economía",
+    "url": "https://cincodias.elpais.com/seccion/rss/economia/",
+    "category": "Economía & Finanzas"
+  },
+  {
+    "name": "El País - Economía",
+    "url": "https://elpais.com/rss/economia/portada.xml",
+    "category": "Macroeconomía"
+  },
+  {
+    "name": "El Mundo - Economía",
+    "url": "https://www.elmundo.es/rss/economia.xml",
+    "category": "Macroeconomía"
+  }
+];
+
+// Obtener fuentes RSS con auto-reparación y diagnóstico Docker
 function getSources() {
   try {
     if (fs.existsSync(SOURCES_FILE)) {
-      return JSON.parse(fs.readFileSync(SOURCES_FILE, 'utf-8'));
+      const stats = fs.statSync(SOURCES_FILE);
+      if (stats.isDirectory()) {
+        console.error(`⚠️ ALERTA DOCKER: '${SOURCES_FILE}' se ha montado como un directorio en lugar de un archivo. Esto ocurre si no existía el archivo en el host de Synology antes del despliegue. Usando fuentes por defecto en memoria.`);
+        return DEFAULT_SOURCES;
+      }
+      const data = JSON.parse(fs.readFileSync(SOURCES_FILE, 'utf-8'));
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
     }
   } catch (error) {
     console.error('Error leyendo sources.json:', error);
   }
-  return [];
+  
+  // Si no existe, está vacío o corrupto, intentar guardar y retornar por defecto
+  try {
+    const stats = fs.existsSync(SOURCES_FILE) ? fs.statSync(SOURCES_FILE) : null;
+    if (!stats || !stats.isDirectory()) {
+      fs.writeFileSync(SOURCES_FILE, JSON.stringify(DEFAULT_SOURCES, null, 2), 'utf-8');
+    }
+    return DEFAULT_SOURCES;
+  } catch (e) {
+    console.error('Error al guardar sources.json por defecto (posiblemente montado como directorio en Docker):', e.message);
+    return DEFAULT_SOURCES;
+  }
 }
 
 // Guardar fuentes RSS
