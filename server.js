@@ -3,12 +3,16 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const Parser = require('rss-parser');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3080;
 const parser = new Parser({
-  headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+  headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+  requestOptions: {
+    rejectUnauthorized: false // Ignora fallos de certificado SSL para lectura robusta en NAS o Windows
+  }
 });
 
 // Middleware
@@ -159,6 +163,91 @@ app.get('/api/proposals/:date', (req, res) => {
   } catch (error) {
     console.error('Error leyendo propuesta:', error);
     res.status(500).json({ success: false, error: 'Error al leer la propuesta.' });
+  }
+});
+
+// 7. Generar propuesta bajo demanda utilizando la API oficial de Gemini (JSON estructurado)
+app.post('/api/proposals/generate', async (req, res) => {
+  const { title, snippet, sourceName } = req.body;
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return res.status(400).json({
+      success: false,
+      error: 'Clave API de Gemini ausente. Por favor, añade tu clave API de Gemini en la variable GEMINI_API_KEY dentro de tu panel de Portainer (como variable de entorno) o en un archivo .env.'
+    });
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json'
+      }
+    });
+
+    const prompt = `
+      Eres un economista profesional, experto en comunicación y redacción corporativa de alto impacto para LinkedIn.
+      Tu objetivo es analizar la siguiente noticia económica española y generar:
+      1. Un post para LinkedIn redactado en español. Debe tener un gancho impactante, ser muy fácil de leer (usando párrafos cortos y listas numeradas con emojis), contener emojis discretos y profesionales, y terminar con una pregunta de debate para fomentar la interacción y comentarios de otros profesionales. Al final del post debes incluir la atribución exacta en una línea: "Creado por http://mafede.i234.me con ayuda de Gemini".
+      2. Los datos estructurados para una infografía corporativa en formato vertical de alta resolución (1080x1350 px) que resuma de forma extremadamente visual la noticia.
+      
+      Noticia a analizar:
+      - Título: ${title}
+      - Descripción: ${snippet}
+      - Fuente de origen: ${sourceName}
+      
+      Debes responder ÚNICAMENTE con un objeto JSON con el siguiente esquema estricto de campos:
+      {
+        "postText": "Texto completo del post de LinkedIn listo para copiar y pegar...",
+        "infographicData": {
+          "headline": "Titular de la infografía en mayúsculas (máximo 65 caracteres)",
+          "category": "Categoría general (ej. MACROECONOMÍA, INFLACIÓN, MERCADOS, REGULACIÓN)",
+          "sentiment": true (boolean: true si la noticia es positiva o de crecimiento, false si es de alerta o riesgo),
+          "metric": "Una métrica numérica clave muy llamativa con su símbolo, bien grande (ej. '+2,4% PIB', '3,0% IPC', '126.700 M€')",
+          "metricSub": "Breve descripción de qué representa esa métrica (máximo 40 caracteres en mayúsculas)",
+          "ctxText": "Un párrafo de contexto histórico o explicativo de 2 o 3 líneas (máximo 250 caracteres)",
+          "bullet1": "Primer dato o riesgo clave. Comienza con una palabra en negrita (ej: '<strong>Consumo:</strong> Detalle del dato...'). Máximo 100 caracteres.",
+          "bullet2": "Segundo dato o riesgo clave. Comienza con negrita.",
+          "bullet3": "Tercer dato o riesgo clave. Comienza con negrita.",
+          "mkt1Name": "Nombre del mercado 1 (ej. Renta Variable / IBEX 35)",
+          "mkt1Trend": "up, down, o neutral (según cómo impacte la noticia)",
+          "mkt2Name": "Nombre del mercado 2 (ej. Deuda / Bono 10Y)",
+          "mkt2Trend": "up, down, o neutral",
+          "mkt3Name": "Nombre del mercado 3 (ej. Euro / Divisas o Petróleo / Brent)",
+          "mkt3Trend": "up, down, o neutral",
+          "sourceText": "Fuente: ${sourceName} y diarios económicos españoles | Mayo 2026"
+        }
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const proposalData = JSON.parse(responseText);
+
+    // Guardar automáticamente en proposals/latest.json y en el historial diario YYYY-MM-DD.json
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const safeDate = dateStr.replace(/[^0-9-]/g, '');
+    
+    const filePath = path.join(PROPOSALS_DIR, `${safeDate}.json`);
+    const latestPath = path.join(PROPOSALS_DIR, 'latest.json');
+
+    const proposalObj = {
+      date: safeDate,
+      updatedAt: new Date().toISOString(),
+      postText: proposalData.postText,
+      infographicData: proposalData.infographicData
+    };
+
+    fs.writeFileSync(filePath, JSON.stringify(proposalObj, null, 2), 'utf-8');
+    fs.writeFileSync(latestPath, JSON.stringify(proposalObj, null, 2), 'utf-8');
+
+    res.json({ success: true, proposal: proposalObj });
+
+  } catch (error) {
+    console.error('Error generando propuesta con Gemini:', error);
+    res.status(500).json({ success: false, error: 'Error interno en la generación de la IA: ' + error.message });
   }
 });
 

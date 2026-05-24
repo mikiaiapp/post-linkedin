@@ -1100,3 +1100,86 @@ body {
 .app-footer-page a:hover {
   text-decoration: underline;
 }
+
+/* Estilos de Ilustración de IA (Nano Banana 2) */
+.canvas-artwork-container {
+  width: 100%;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.canvas-artwork-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  transition: transform 0.5s ease;
+}
+
+.canvas-visual-card:hover .canvas-artwork-image {
+  transform: scale(1.05);
+}
+
+/* Overlay de carga premium de Inteligencia Artificial */
+#premium-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(3, 5, 11, 0.88);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: var(--font-title);
+  animation: fadeInOverlay 0.3s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.loader-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 3.5rem 4rem;
+  border-radius: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
+  max-width: 480px;
+}
+
+.loader-spinner {
+  font-size: 3.5rem;
+  animation: spin 1.5s linear infinite;
+  filter: drop-shadow(0 0 15px var(--primary));
+  user-select: none;
+}
+
+.loader-message {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #f1f5f9;
+  line-height: 1.5;
+  margin: 0;
+}
+
+
