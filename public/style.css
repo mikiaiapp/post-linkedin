@@ -1182,4 +1182,51 @@ body {
   margin: 0;
 }
 
+/* ==========================================================================
+   Estilos Premium para Edición Directa en el Lienzo (contenteditable)
+   ========================================================================== */
+[contenteditable="true"] {
+  outline: none;
+  cursor: text;
+  transition: all 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 4px;
+  position: relative;
+}
 
+[contenteditable="true"]:hover {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08), 0 0 10px rgba(255, 255, 255, 0.03);
+}
+
+[contenteditable="true"]:focus {
+  background: rgba(99, 102, 241, 0.08) !important;
+  box-shadow: 0 0 0 2px var(--primary), 0 0 15px var(--primary-glow) !important;
+  color: #ffffff !important;
+}
+
+/* Para elementos dentro de canvas sentiment-positive cuando están enfocados */
+.sentiment-positive [contenteditable="true"]:focus {
+  background: rgba(16, 185, 129, 0.08) !important;
+  box-shadow: 0 0 0 2px var(--emerald), 0 0 15px var(--emerald-glow) !important;
+}
+
+/* Para elementos dentro de canvas sentiment-negative cuando están enfocados */
+.sentiment-negative [contenteditable="true"]:focus {
+  background: rgba(244, 63, 94, 0.08) !important;
+  box-shadow: 0 0 0 2px var(--rose), 0 0 15px var(--rose-glow) !important;
+}
+
+/* Indicación sutil de que el lienzo completo es interactivo/editable al cargar */
+.infographic-canvas {
+  position: relative;
+}
+
+/* Títulos descriptivos para badges interactivos */
+.market-badge[title] {
+  transition: all 0.2s ease;
+}
+.market-badge[title]:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+  filter: brightness(1.2);
+}

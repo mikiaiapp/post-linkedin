@@ -81,130 +81,17 @@
             <label for="info-ai-model-custom">Identificador del Modelo</label>
             <input type="text" id="info-ai-model-custom" placeholder="Ej. gemini-4.0-flash">
           </div>
+          <div class="form-group">
+            <label for="info-sentiment">Sentimiento (Tema Visual)</label>
+            <select id="info-sentiment">
+              <option value="positive" selected>🟢 Positivo (Verde)</option>
+              <option value="negative">🔴 Negativo (Rojo)</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <!-- Card: Editor de la Infografía (Actualizado para el diseño denso) -->
-      <div class="glass-card">
-        <div class="card-header">
-          <span class="card-icon">📊</span>
-          <h2>Editar Datos de la Infografía</h2>
-        </div>
-        <div class="card-body form-grid">
-          <!-- Datos Generales -->
-          <div class="form-group col-span-2">
-            <label for="info-headline">Titular Principal de Impacto</label>
-            <input type="text" id="info-headline" placeholder="Ej. LA DEUDA DE EE.UU. SUPERA EL 100% DE SU PIB">
-          </div>
-          <div class="form-group">
-            <label for="info-category">Categoría / Etiqueta Superior</label>
-            <input type="text" id="info-category" placeholder="Ej. MACROECONOMÍA">
-          </div>
-          <div class="form-group">
-            <label for="info-sentiment">Sentimiento (Color)</label>
-            <div class="toggle-switch">
-              <input type="checkbox" id="info-sentiment" checked>
-              <label for="info-sentiment" class="toggle-label">
-                <span class="toggle-pos">Positivo (Verde)</span>
-                <span class="toggle-neg">Negativo (Rojo)</span>
-              </label>
-            </div>
-          </div>
 
-          <!-- Métrica Destacada -->
-          <div class="form-group">
-            <label for="info-metric">Métrica Central</label>
-            <input type="text" id="info-metric" placeholder="Ej. $31.27 T">
-          </div>
-          <div class="form-group">
-            <label for="info-metric-sub">Subtexto de la Métrica</label>
-            <input type="text" id="info-metric-sub" placeholder="Ej. DEUDA TOTAL ACUMULADA">
-          </div>
-
-          <!-- Columna 1: Contexto Histórico -->
-          <div class="form-group col-span-2 section-divider-form">
-            <span>COLUMNA 1: CONTEXTO HISTÓRICO</span>
-          </div>
-          <div class="form-group col-span-2">
-            <label for="info-ctx-text">Texto de Contexto</label>
-            <textarea id="info-ctx-text" class="input-textarea-short" placeholder="Escribe el párrafo histórico explicativo..."></textarea>
-          </div>
-
-          <!-- Columna 2: Claves del Análisis -->
-          <div class="form-group col-span-2 section-divider-form">
-            <span>COLUMNA 2: CLAVES DEL ANÁLISIS</span>
-          </div>
-          <div class="form-group col-span-2">
-            <div class="bullet-inputs">
-              <div class="bullet-input-wrapper">
-                <span class="bullet-number">1</span>
-                <input type="text" id="info-bullet-1" placeholder="Dato clave 1 (Prefijo: Detalle)...">
-              </div>
-              <div class="bullet-input-wrapper">
-                <span class="bullet-number">2</span>
-                <input type="text" id="info-bullet-2" placeholder="Dato clave 2...">
-              </div>
-              <div class="bullet-input-wrapper">
-                <span class="bullet-number">3</span>
-                <input type="text" id="info-bullet-3" placeholder="Dato clave 3...">
-              </div>
-            </div>
-          </div>
-
-          <!-- Columna 3: Impacto en Mercados -->
-          <div class="form-group col-span-2 section-divider-form">
-            <span>COLUMNA 3: IMPACTO EN MERCADOS</span>
-          </div>
-          
-          <!-- Fila de Mercado 1 -->
-          <div class="form-group">
-            <label>Mercado 1</label>
-            <input type="text" id="info-mkt-1-name" placeholder="Ej. Renta Variable">
-          </div>
-          <div class="form-group">
-            <label>Tendencia 1</label>
-            <select id="info-mkt-1-trend">
-              <option value="up">Subida (Verde) ⬆️</option>
-              <option value="down" selected>Bajada (Rojo) ⬇️</option>
-              <option value="neutral">Neutral ➡️</option>
-            </select>
-          </div>
-
-          <!-- Fila de Mercado 2 -->
-          <div class="form-group">
-            <label>Mercado 2</label>
-            <input type="text" id="info-mkt-2-name" placeholder="Ej. Renta Fija">
-          </div>
-          <div class="form-group">
-            <label>Tendencia 2</label>
-            <select id="info-mkt-2-trend">
-              <option value="up" selected>Subida (Verde) ⬆️</option>
-              <option value="down">Bajada (Rojo) ⬇️</option>
-              <option value="neutral">Neutral ➡️</option>
-            </select>
-          </div>
-
-          <!-- Fila de Mercado 3 -->
-          <div class="form-group">
-            <label>Mercado 3</label>
-            <input type="text" id="info-mkt-3-name" placeholder="Ej. Dólar (USD)">
-          </div>
-          <div class="form-group">
-            <label>Tendencia 3</label>
-            <select id="info-mkt-3-trend">
-              <option value="up">Subida (Verde) ⬆️</option>
-              <option value="down" selected>Bajada (Rojo) ⬇️</option>
-              <option value="neutral">Neutral ➡️</option>
-            </select>
-          </div>
-
-          <!-- Pie de página: Fuente -->
-          <div class="form-group col-span-2">
-            <label for="info-source">Fuentes de Información</label>
-            <input type="text" id="info-source" placeholder="Ej. Fuente: FMI, Bloomberg, Banco de España | Mayo 2026">
-          </div>
-        </div>
-      </div>
 
       <!-- Card: Noticias del Día (Scraping) -->
       <div class="glass-card">
@@ -248,10 +135,10 @@
             <!-- CABECERA DE LA INFOGRAFÍA (Estilo Headline) -->
             <div class="canvas-header-premium">
               <div class="canvas-tag-row">
-                <span class="canvas-category" id="canvas-tag">MACROECONOMÍA</span>
+                <span class="canvas-category" id="canvas-tag" contenteditable="true" spellcheck="false">MACROECONOMÍA</span>
                 <span class="canvas-decor-line"></span>
               </div>
-              <h2 class="canvas-title" id="canvas-title-text">HITO HISTÓRICO: LA DEUDA DE EE.UU. SUPERA EL 100% DE SU PIB</h2>
+              <h2 class="canvas-title" id="canvas-title-text" contenteditable="true" spellcheck="false">HITO HISTÓRICO: LA DEUDA DE EE.UU. SUPERA EL 100% DE SU PIB</h2>
             </div>
 
             <!-- CUERPO PRINCIPAL (KPI & Visual 3D Card) -->
@@ -259,9 +146,9 @@
               
               <!-- Métrica Grande a la Izquierda -->
               <div class="canvas-kpi-card">
-                <span class="metric-glow-text" id="canvas-metric-value">$31.27 T</span>
-                <span class="metric-subtitle" id="canvas-metric-sub">DEUDA TOTAL ACUMULADA</span>
-                <div class="kpi-mini-badge">NUEVO MÁXIMO HISTÓRICO</div>
+                <span class="metric-glow-text" id="canvas-metric-value" contenteditable="true" spellcheck="false">$31.27 T</span>
+                <span class="metric-subtitle" id="canvas-metric-sub" contenteditable="true" spellcheck="false">DEUDA TOTAL ACUMULADA</span>
+                <div class="kpi-mini-badge" contenteditable="true" spellcheck="false">NUEVO MÁXIMO HISTÓRICO</div>
               </div>
 
               <!-- Ilustración / Elemento Visual 3D de Alto Impacto generado por Nano Banana 2 -->
@@ -294,7 +181,7 @@
                     <polygon points="100,42 92,54 108,54" fill="#f8fafc" />
                   </svg>
                 </div>
-                <div class="visual-card-caption" id="canvas-artwork-caption">La deuda pública supera el tamaño de la economía nacional por primera vez desde la IGM.</div>
+                <div class="visual-card-caption" id="canvas-artwork-caption" contenteditable="true" spellcheck="false">La deuda pública supera el tamaño de la economía nacional por primera vez desde la IGM.</div>
               </div>
             </div>
 
@@ -316,7 +203,7 @@
                       <line x1="20" y1="44" x2="44" y2="44" stroke="currentColor" stroke-width="2" />
                     </svg>
                   </div>
-                  <p class="col-desc-text" id="canvas-ctx-text">La última vez que la deuda total de EE.UU. rebasó el umbral del 100% de su Producto Interior Bruto fue al término de la Segunda Guerra Mundial (1945), en un contexto de reconstrucción global.</p>
+                  <p class="col-desc-text" id="canvas-ctx-text" contenteditable="true" spellcheck="false">La última vez que la deuda total de EE.UU. rebasó el umbral del 100% de su Producto Interior Bruto fue al término de la Segunda Guerra Mundial (1945), en un contexto de reconstrucción global.</p>
                 </div>
               </div>
 
@@ -330,17 +217,17 @@
                   <!-- Bullet 1 -->
                   <div class="col-bullet-wrapper">
                     <div class="bullet-dot-glow"></div>
-                    <p class="col-bullet-text" id="canvas-bullet-1-text"><strong>Inflación:</strong> La monetización masiva de deuda pública acelera los índices de precios al consumidor.</p>
+                    <p class="col-bullet-text" id="canvas-bullet-1-text" contenteditable="true" spellcheck="false"><strong>Inflación:</strong> La monetización masiva de deuda pública acelera los índices de precios al consumidor.</p>
                   </div>
                   <!-- Bullet 2 -->
                   <div class="col-bullet-wrapper">
                     <div class="bullet-dot-glow"></div>
-                    <p class="col-bullet-text" id="canvas-bullet-2-text"><strong>Tasas de Interés:</strong> Mayores volúmenes de deuda pública obligan a la Fed a mantener tipos altos para atraer inversores.</p>
+                    <p class="col-bullet-text" id="canvas-bullet-2-text" contenteditable="true" spellcheck="false"><strong>Tasas de Interés:</strong> Mayores volúmenes de deuda pública obligan a la Fed a mantener tipos altos para atraer inversores.</p>
                   </div>
                   <!-- Bullet 3 -->
                   <div class="col-bullet-wrapper">
                     <div class="bullet-dot-glow"></div>
-                    <p class="col-bullet-text" id="canvas-bullet-3-text"><strong>Confianza:</strong> Riesgo sistémico de depreciación en los bonos soberanos de largo plazo y el papel del dólar.</p>
+                    <p class="col-bullet-text" id="canvas-bullet-3-text" contenteditable="true" spellcheck="false"><strong>Confianza:</strong> Riesgo sistémico de depreciación en los bonos soberanos de largo plazo y el papel del dólar.</p>
                   </div>
                 </div>
               </div>
@@ -355,24 +242,24 @@
                   
                   <!-- Mercado 1 -->
                   <div class="market-status-row">
-                    <span class="market-name" id="canvas-mkt-1-name">Renta Variable</span>
-                    <div class="market-badge trend-down" id="canvas-mkt-1-badge">
+                    <span class="market-name" id="canvas-mkt-1-name" contenteditable="true" spellcheck="false">Renta Variable</span>
+                    <div class="market-badge trend-down" id="canvas-mkt-1-badge" title="Clic para alternar tendencia (sube/baja/estable)" style="cursor: pointer;">
                       <span class="trend-icon">⬇️</span> CORRECCIÓN
                     </div>
                   </div>
 
                   <!-- Mercado 2 -->
                   <div class="market-status-row">
-                    <span class="market-name" id="canvas-mkt-2-name">Renta Fija</span>
-                    <div class="market-badge trend-up" id="canvas-mkt-2-badge">
+                    <span class="market-name" id="canvas-mkt-2-name" contenteditable="true" spellcheck="false">Renta Fija</span>
+                    <div class="market-badge trend-up" id="canvas-mkt-2-badge" title="Clic para alternar tendencia (sube/baja/estable)" style="cursor: pointer;">
                       <span class="trend-icon">⬆️</span> RENTABILIDAD
                     </div>
                   </div>
 
                   <!-- Mercado 3 -->
                   <div class="market-status-row">
-                    <span class="market-name" id="canvas-mkt-3-name">Dólar (USD)</span>
-                    <div class="market-badge trend-down" id="canvas-mkt-3-badge">
+                    <span class="market-name" id="canvas-mkt-3-name" contenteditable="true" spellcheck="false">Dólar (USD)</span>
+                    <div class="market-badge trend-down" id="canvas-mkt-3-badge" title="Clic para alternar tendencia (sube/baja/estable)" style="cursor: pointer;">
                       <span class="trend-icon">⬇️</span> VOLATILIDAD
                     </div>
                   </div>
@@ -386,7 +273,7 @@
             <div class="canvas-footer">
               <div class="footer-divider"></div>
               <div class="footer-content">
-                <p class="footer-source-text" id="canvas-footer-source">Fuente: FMI, Bloomberg, Banco de España | Mayo 2026</p>
+                <p class="footer-source-text" id="canvas-footer-source" contenteditable="true" spellcheck="false">Fuente: FMI, Bloomberg, Banco de España | Mayo 2026</p>
                 <p class="footer-author-text">Creado por <span class="accent-link">http://mafede.i234.me</span> con ayuda de <span class="accent-link">Gemini</span></p>
               </div>
             </div>

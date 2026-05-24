@@ -8,29 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('infographic-canvas-element');
   const viewport = canvas.parentElement;
   
-  // Inputs del editor de infografía
-  const inputHeadline = document.getElementById('info-headline');
-  const inputCategory = document.getElementById('info-category');
-  const inputMetric = document.getElementById('info-metric');
-  const inputMetricSub = document.getElementById('info-metric-sub');
+  // Inputs del editor de infografía (dentro de la tarjeta de configuración)
   const inputSentiment = document.getElementById('info-sentiment');
-  
-  const inputCtxText = document.getElementById('info-ctx-text');
-  
-  const inputBullet1 = document.getElementById('info-bullet-1');
-  const inputBullet2 = document.getElementById('info-bullet-2');
-  const inputBullet3 = document.getElementById('info-bullet-3');
-  
-  const inputMkt1Name = document.getElementById('info-mkt-1-name');
-  const inputMkt1Trend = document.getElementById('info-mkt-1-trend');
-  
-  const inputMkt2Name = document.getElementById('info-mkt-2-name');
-  const inputMkt2Trend = document.getElementById('info-mkt-2-trend');
-  
-  const inputMkt3Name = document.getElementById('info-mkt-3-name');
-  const inputMkt3Trend = document.getElementById('info-mkt-3-trend');
-  
-  const inputSource = document.getElementById('info-source');
 
   // Configuración de la IA
   const inputAIModel = document.getElementById('info-ai-model');
@@ -88,38 +67,16 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', scaleCanvas);
   setTimeout(scaleCanvas, 300);
 
-  // --- 2. Sincronización en tiempo real (Inputs -> Canvas) ---
-  function syncInput(inputEl, canvasEl) {
-    if (inputEl && canvasEl) {
-      inputEl.addEventListener('input', () => {
-        canvasEl.textContent = inputEl.value || '...';
-        scaleCanvas();
-      });
-    }
-  }
+  // --- 2. Interactividad directa del Canvas (Edición en vivo) ---
+  
+  // Sincronizar escalado al editar directamente en el lienzo
+  canvas.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    el.addEventListener('input', () => {
+      scaleCanvas();
+    });
+  });
 
-  syncInput(inputHeadline, canvasTitle);
-  syncInput(inputCategory, canvasTag);
-  syncInput(inputMetric, canvasMetric);
-  syncInput(inputMetricSub, canvasMetricSub);
-  syncInput(inputCtxText, canvasCtxText);
-  syncInput(inputBullet1, canvasBullet1);
-  syncInput(inputBullet2, canvasBullet2);
-  syncInput(inputBullet3, canvasBullet3);
-  syncInput(inputMkt1Name, canvasMkt1Name);
-  syncInput(inputMkt2Name, canvasMkt2Name);
-  syncInput(inputMkt3Name, canvasMkt3Name);
-  syncInput(inputSource, canvasFooterSource);
-
-  // Sincronización de badges de tendencia
-  function syncTrendBadge(selectEl, badgeEl) {
-    if (selectEl && badgeEl) {
-      selectEl.addEventListener('change', () => {
-        updateTrendBadgeUI(selectEl.value, badgeEl);
-      });
-    }
-  }
-
+  // Función para actualizar los badges de mercado en base a su tendencia
   function updateTrendBadgeUI(value, badgeEl) {
     badgeEl.className = 'market-badge'; // Reset
     if (value === 'up') {
@@ -135,9 +92,34 @@ document.addEventListener('DOMContentLoaded', () => {
     scaleCanvas();
   }
 
-  syncTrendBadge(inputMkt1Trend, canvasMkt1Badge);
-  syncTrendBadge(inputMkt2Trend, canvasMkt2Badge);
-  syncTrendBadge(inputMkt3Trend, canvasMkt3Badge);
+  // Configurar clic en los badges de mercado para alternar su estado
+  function setupMarketBadgeCycling(badgeEl) {
+    if (badgeEl) {
+      badgeEl.addEventListener('click', () => {
+        let currentTrend = 'neutral';
+        if (badgeEl.classList.contains('trend-up')) {
+          currentTrend = 'up';
+        } else if (badgeEl.classList.contains('trend-down')) {
+          currentTrend = 'down';
+        }
+        
+        let nextTrend = 'neutral';
+        if (currentTrend === 'up') {
+          nextTrend = 'down';
+        } else if (currentTrend === 'down') {
+          nextTrend = 'neutral';
+        } else {
+          nextTrend = 'up';
+        }
+        
+        updateTrendBadgeUI(nextTrend, badgeEl);
+      });
+    }
+  }
+
+  setupMarketBadgeCycling(canvasMkt1Badge);
+  setupMarketBadgeCycling(canvasMkt2Badge);
+  setupMarketBadgeCycling(canvasMkt3Badge);
 
   // Alternar visualización de modelo personalizado en base a selección
   inputAIModel.addEventListener('change', () => {
@@ -156,25 +138,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Sincronización de Sentimiento / Tema
-  inputSentiment.addEventListener('change', () => {
-    updateSentimentTheme(inputSentiment.checked);
-  });
+  if (inputSentiment) {
+    inputSentiment.addEventListener('change', () => {
+      updateSentimentTheme(inputSentiment.value === 'positive');
+    });
+  }
 
   function updateSentimentTheme(isPositive) {
     if (isPositive) {
       canvas.classList.remove('sentiment-negative');
       canvas.classList.add('sentiment-positive');
-      postSentimentIndicator.textContent = 'Noticia Positiva';
-      postSentimentIndicator.className = 'sentiment-indicator positive';
+      if (postSentimentIndicator) {
+        postSentimentIndicator.textContent = 'Noticia Positiva';
+        postSentimentIndicator.className = 'sentiment-indicator positive';
+      }
       // Tilted arm SVG (Balanza positiva)
-      document.getElementById('svg-scale-arm').setAttribute('transform', 'rotate(-12 100 50)');
+      const svgArm = document.getElementById('svg-scale-arm');
+      if (svgArm) svgArm.setAttribute('transform', 'rotate(-12 100 50)');
     } else {
       canvas.classList.remove('sentiment-positive');
       canvas.classList.add('sentiment-negative');
-      postSentimentIndicator.textContent = 'Noticia Negativa';
-      postSentimentIndicator.className = 'sentiment-indicator negative';
+      if (postSentimentIndicator) {
+        postSentimentIndicator.textContent = 'Noticia Negativa';
+        postSentimentIndicator.className = 'sentiment-indicator negative';
+      }
       // Tilted arm SVG (Balanza negativa)
-      document.getElementById('svg-scale-arm').setAttribute('transform', 'rotate(12 100 50)');
+      const svgArm = document.getElementById('svg-scale-arm');
+      if (svgArm) svgArm.setAttribute('transform', 'rotate(12 100 50)');
     }
   }
 
@@ -222,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Formatear nombre de descarga con la fecha
       const dateStr = new Date().toISOString().slice(0, 10);
-      const headlineSnippet = inputHeadline.value
+      const headlineSnippet = canvasTitle.textContent
         .toLowerCase()
         .replace(/[^a-z0-9 ]/g, '')
         .replace(/\s+/g, '_')
@@ -315,9 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (e.target.classList.contains('btn-generate-ai')) return;
 
           if (confirm(`¿Quieres utilizar el titular "${item.title}" para tu infografía de hoy?`)) {
-            inputHeadline.value = item.title.toUpperCase();
             canvasTitle.textContent = item.title.toUpperCase();
-            inputCategory.value = item.sourceCategory.toUpperCase();
             canvasTag.textContent = item.sourceCategory.toUpperCase();
             scaleCanvas();
           }
@@ -356,38 +344,21 @@ document.addEventListener('DOMContentLoaded', () => {
               postTextarea.value = proposal.postText;
               charCount.textContent = postTextarea.value.length;
               
-              // Rellenar inputs de la infografía
+              // Rellenar elementos directamente en el canvas
               const info = proposal.infographicData;
-              inputHeadline.value = info.headline || '';
-              inputCategory.value = info.category || '';
-              inputSentiment.checked = info.sentiment !== undefined ? info.sentiment : true;
-              inputMetric.value = info.metric || '';
-              inputMetricSub.value = info.metricSub || '';
-              inputCtxText.value = info.ctxText || '';
-              inputBullet1.value = info.bullet1 || '';
-              inputBullet2.value = info.bullet2 || '';
-              inputBullet3.value = info.bullet3 || '';
+              const isPositive = info.sentiment !== undefined ? info.sentiment : true;
+              if (inputSentiment) {
+                inputSentiment.value = isPositive ? 'positive' : 'negative';
+              }
               
-              inputMkt1Name.value = info.mkt1Name || '';
-              inputMkt1Trend.value = info.mkt1Trend || 'down';
-              
-              inputMkt2Name.value = info.mkt2Name || '';
-              inputMkt2Trend.value = info.mkt2Trend || 'up';
-              
-              inputMkt3Name.value = info.mkt3Name || '';
-              inputMkt3Trend.value = info.mkt3Trend || 'down';
-              
-              inputSource.value = info.sourceText || '';
-              
-              // Sincronizar Canvas
               canvasTitle.textContent = info.headline || '...';
               canvasTag.textContent = info.category || '...';
               canvasMetric.textContent = info.metric || '...';
               canvasMetricSub.textContent = info.metricSub || '...';
               canvasCtxText.textContent = info.ctxText || '...';
-              canvasBullet1.textContent = info.bullet1 || '...';
-              canvasBullet2.textContent = info.bullet2 || '...';
-              canvasBullet3.textContent = info.bullet3 || '...';
+              canvasBullet1.innerHTML = info.bullet1 || '...';
+              canvasBullet2.innerHTML = info.bullet2 || '...';
+              canvasBullet3.innerHTML = info.bullet3 || '...';
               
               canvasMkt1Name.textContent = info.mkt1Name || '...';
               canvasMkt2Name.textContent = info.mkt2Name || '...';
@@ -395,11 +366,11 @@ document.addEventListener('DOMContentLoaded', () => {
               
               canvasFooterSource.textContent = info.sourceText || '...';
               
-              updateTrendBadgeUI(inputMkt1Trend.value, canvasMkt1Badge);
-              updateTrendBadgeUI(inputMkt2Trend.value, canvasMkt2Badge);
-              updateTrendBadgeUI(inputMkt3Trend.value, canvasMkt3Badge);
+              updateTrendBadgeUI(info.mkt1Trend || 'down', canvasMkt1Badge);
+              updateTrendBadgeUI(info.mkt2Trend || 'up', canvasMkt2Badge);
+              updateTrendBadgeUI(info.mkt3Trend || 'down', canvasMkt3Badge);
               
-              updateSentimentTheme(inputSentiment.checked);
+              updateSentimentTheme(isPositive);
               scaleCanvas();
               
               hideLoadingOverlay();
@@ -432,26 +403,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // Guardar propuesta actual
   btnSaveProposal.addEventListener('click', async () => {
     const dateStr = new Date().toISOString().slice(0, 10);
+    
+    // Obtener tendencia de los badges
+    const getTrendFromBadge = (badgeEl) => {
+      if (badgeEl.classList.contains('trend-up')) return 'up';
+      if (badgeEl.classList.contains('trend-down')) return 'down';
+      return 'neutral';
+    };
+
     const proposal = {
       date: dateStr,
       postText: postTextarea.value,
       infographicData: {
-        headline: inputHeadline.value,
-        category: inputCategory.value,
-        sentiment: inputSentiment.checked,
-        metric: inputMetric.value,
-        metricSub: inputMetricSub.value,
-        ctxText: inputCtxText.value,
-        bullet1: inputBullet1.value,
-        bullet2: inputBullet2.value,
-        bullet3: inputBullet3.value,
-        mkt1Name: inputMkt1Name.value,
-        mkt1Trend: inputMkt1Trend.value,
-        mkt2Name: inputMkt2Name.value,
-        mkt2Trend: inputMkt2Trend.value,
-        mkt3Name: inputMkt3Name.value,
-        mkt3Trend: inputMkt3Trend.value,
-        sourceText: inputSource.value
+        headline: canvasTitle.textContent,
+        category: canvasTag.textContent,
+        sentiment: inputSentiment ? (inputSentiment.value === 'positive') : true,
+        metric: canvasMetric.textContent,
+        metricSub: canvasMetricSub.textContent,
+        ctxText: canvasCtxText.textContent,
+        bullet1: canvasBullet1.innerHTML,
+        bullet2: canvasBullet2.innerHTML,
+        bullet3: canvasBullet3.innerHTML,
+        mkt1Name: canvasMkt1Name.textContent,
+        mkt1Trend: getTrendFromBadge(canvasMkt1Badge),
+        mkt2Name: canvasMkt2Name.textContent,
+        mkt2Trend: getTrendFromBadge(canvasMkt2Badge),
+        mkt3Name: canvasMkt3Name.textContent,
+        mkt3Trend: getTrendFromBadge(canvasMkt3Badge),
+        sourceText: canvasFooterSource.textContent
       }
     };
 
@@ -484,40 +463,21 @@ document.addEventListener('DOMContentLoaded', () => {
         postTextarea.value = data.postText;
         charCount.textContent = postTextarea.value.length;
         
-        // Rellenar inputs de la infografía
+        // Rellenar elementos directamente en el canvas
         const info = data.infographicData;
-        inputHeadline.value = info.headline || '';
-        inputCategory.value = info.category || '';
-        inputSentiment.checked = info.sentiment !== undefined ? info.sentiment : true;
-        inputMetric.value = info.metric || '';
-        inputMetricSub.value = info.metricSub || '';
+        const isPositive = info.sentiment !== undefined ? info.sentiment : true;
+        if (inputSentiment) {
+          inputSentiment.value = isPositive ? 'positive' : 'negative';
+        }
         
-        inputCtxText.value = info.ctxText || '';
-        
-        inputBullet1.value = info.bullet1 || '';
-        inputBullet2.value = info.bullet2 || '';
-        inputBullet3.value = info.bullet3 || '';
-        
-        inputMkt1Name.value = info.mkt1Name || '';
-        inputMkt1Trend.value = info.mkt1Trend || 'down';
-        
-        inputMkt2Name.value = info.mkt2Name || '';
-        inputMkt2Trend.value = info.mkt2Trend || 'up';
-        
-        inputMkt3Name.value = info.mkt3Name || '';
-        inputMkt3Trend.value = info.mkt3Trend || 'down';
-        
-        inputSource.value = info.sourceText || '';
-        
-        // Sincronizar Canvas
         canvasTitle.textContent = info.headline || '...';
         canvasTag.textContent = info.category || '...';
         canvasMetric.textContent = info.metric || '...';
         canvasMetricSub.textContent = info.metricSub || '...';
         canvasCtxText.textContent = info.ctxText || '...';
-        canvasBullet1.textContent = info.bullet1 || '...';
-        canvasBullet2.textContent = info.bullet2 || '...';
-        canvasBullet3.textContent = info.bullet3 || '...';
+        canvasBullet1.innerHTML = info.bullet1 || '...';
+        canvasBullet2.innerHTML = info.bullet2 || '...';
+        canvasBullet3.innerHTML = info.bullet3 || '...';
         
         canvasMkt1Name.textContent = info.mkt1Name || '...';
         canvasMkt2Name.textContent = info.mkt2Name || '...';
@@ -525,11 +485,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         canvasFooterSource.textContent = info.sourceText || '...';
         
-        updateTrendBadgeUI(inputMkt1Trend.value, canvasMkt1Badge);
-        updateTrendBadgeUI(inputMkt2Trend.value, canvasMkt2Badge);
-        updateTrendBadgeUI(inputMkt3Trend.value, canvasMkt3Badge);
+        updateTrendBadgeUI(info.mkt1Trend || 'down', canvasMkt1Badge);
+        updateTrendBadgeUI(info.mkt2Trend || 'up', canvasMkt2Badge);
+        updateTrendBadgeUI(info.mkt3Trend || 'down', canvasMkt3Badge);
         
-        updateSentimentTheme(inputSentiment.checked);
+        updateSentimentTheme(isPositive);
         scaleCanvas();
       }
     } catch (error) {
