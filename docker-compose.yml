@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  post-linkedin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: post-linkedin-app
+    ports:
+      - "3080:3080"
+    restart: unless-stopped
+    volumes:
+      # Volúmenes persistentes para no perder tus datos al actualizar el contenedor.
+      # Nota para Synology NAS: Puedes usar rutas locales relativas (./proposals)
+      # o cambiarlas por rutas absolutas en tu File Station si lo prefieres, por ejemplo:
+      # - /volume1/docker/postlinkedin/proposals:/usr/src/app/proposals
+      # - /volume1/docker/postlinkedin/sources.json:/usr/src/app/sources.json
+      - ./proposals:/usr/src/app/proposals
+      - ./sources.json:/usr/src/app/sources.json

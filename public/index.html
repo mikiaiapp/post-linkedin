@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Post & Infographic Generator | Economía</title>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- CSS Principal -->
+  <link rel="stylesheet" href="style.css">
+  <!-- html2canvas para exportar la infografía a imagen sin pérdidas de calidad -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <!-- Cabecera de la Aplicación -->
+  <header class="app-header">
+    <div class="header-logo">
+      <span class="logo-icon">📊</span>
+      <div class="logo-text">
+        <h1>PostLinkedIn</h1>
+        <p>Automatización de Prensa Económica & Infografías</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="date-badge" id="current-date-badge">24 de Mayo, 2026</span>
+      <button class="btn btn-secondary" id="btn-sync-news" title="Scrapear prensa hoy">
+        <span class="btn-icon">🔄</span> Actualizar Prensa
+      </button>
+    </div>
+  </header>
+
+  <main class="app-container">
+    
+    <!-- COLUMNA IZQUIERDA: Herramientas de Edición y Noticias -->
+    <section class="control-panel">
+      
+      <!-- Card: Editor de Post de LinkedIn -->
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-icon">📝</span>
+          <h2>Propuesta de Post para LinkedIn</h2>
+          <span class="sentiment-indicator positive" id="post-sentiment-indicator">Noticia Positiva</span>
+        </div>
+        <div class="card-body">
+          <p class="section-desc">Revisa y edita el post redactado para tu audiencia profesional de LinkedIn. Incluye ganchos, emoticonos e hipervínculos.</p>
+          <div class="textarea-container">
+            <textarea id="linkedin-post-textarea" placeholder="Escribe o edita la propuesta de post aquí..."></textarea>
+            <div class="char-counter"><span id="char-count">0</span> / 3000 caracteres</div>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-primary" id="btn-copy-post">
+              <span class="btn-icon">📋</span> Copiar al Portapapeles
+            </button>
+            <button class="btn btn-secondary" id="btn-save-proposal">
+              <span class="btn-icon">💾</span> Guardar Propuesta
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Editor de la Infografía -->
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-icon">⚙️</span>
+          <h2>Personalizar Infografía</h2>
+        </div>
+        <div class="card-body form-grid">
+          <div class="form-group col-span-2">
+            <label for="info-headline">Titular Principal (Impactante)</label>
+            <input type="text" id="info-headline" placeholder="Ej. El PIB de España crece un 2,5% superando previsiones">
+          </div>
+          <div class="form-group">
+            <label for="info-category">Categoría / Etiqueta</label>
+            <input type="text" id="info-category" placeholder="Ej. MACROECONOMÍA">
+          </div>
+          <div class="form-group">
+            <label for="info-sentiment">Sentimiento (Color)</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="info-sentiment" checked>
+              <label for="info-sentiment" class="toggle-label">
+                <span class="toggle-pos">Positivo (Verde)</span>
+                <span class="toggle-neg">Negativo (Rojo)</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group col-span-2">
+            <label for="info-metric">Métrica / Dato Destacado</label>
+            <input type="text" id="info-metric" placeholder="Ej. +2,5% PIB o 1.250 M€">
+          </div>
+          
+          <div class="form-group col-span-2">
+            <label>Puntos Clave (Resumen visual)</label>
+            <div class="bullet-inputs">
+              <div class="bullet-input-wrapper">
+                <span class="bullet-number">1</span>
+                <input type="text" id="info-bullet-1" placeholder="Primer dato clave de la noticia...">
+              </div>
+              <div class="bullet-input-wrapper">
+                <span class="bullet-number">2</span>
+                <input type="text" id="info-bullet-2" placeholder="Segundo dato clave de la noticia...">
+              </div>
+              <div class="bullet-input-wrapper">
+                <span class="bullet-number">3</span>
+                <input type="text" id="info-bullet-3" placeholder="Tercer dato clave de la noticia...">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Noticias del Día (Scraping) -->
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-icon">📰</span>
+          <h2>Prensa Económica Recopilada</h2>
+          <span class="badge" id="news-count-badge">0 noticias</span>
+        </div>
+        <div class="card-body">
+          <div class="news-list" id="scraped-news-list">
+            <div class="loading-state">
+              <span class="spinner">⏳</span>
+              <p>Cargando últimas noticias de los diarios económicos...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Gestión de Fuentes RSS -->
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-icon">🔗</span>
+          <h2>Fuentes de Información RSS</h2>
+        </div>
+        <div class="card-body">
+          <p class="section-desc">Añade o edita las fuentes RSS que se utilizan para el escaneo económico matutino.</p>
+          <div class="sources-list" id="active-sources-list">
+            <!-- Cargadas dinámicamente -->
+          </div>
+          <div class="add-source-form">
+            <input type="text" id="new-source-name" placeholder="Nombre (ej. Expansión)">
+            <input type="url" id="new-source-url" placeholder="URL del Feed RSS">
+            <button class="btn btn-secondary" id="btn-add-source">+</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- COLUMNA DERECHA: Previsualización de la Infografía Vertical -->
+    <section class="preview-panel">
+      <div class="preview-sticky-wrapper">
+        <div class="preview-header">
+          <span class="card-icon">🖼️</span>
+          <h2>Previsualización (Lienzo 1080 x 1350 px)</h2>
+          <button class="btn btn-accent" id="btn-download-infographic">
+            <span class="btn-icon">📥</span> Descargar PNG
+          </button>
+        </div>
+
+        <!-- LIENZO DE LA INFOGRAFÍA CON DIMENSIONES FIJAS 1080x1350 (escala visual en CSS) -->
+        <div class="canvas-viewport">
+          <div class="infographic-canvas sentiment-positive" id="infographic-canvas-element">
+            
+            <!-- Glow background decorativos -->
+            <div class="glow-bg-1"></div>
+            <div class="glow-bg-2"></div>
+            
+            <div class="canvas-header">
+              <span class="canvas-category" id="canvas-tag">MACROECONOMÍA</span>
+              <h2 class="canvas-title" id="canvas-title-text">El PIB de España crece un 2,5% superando todas las previsiones oficiales</h2>
+              <div class="canvas-divider"></div>
+            </div>
+
+            <div class="canvas-body">
+              <!-- Métrica Grande -->
+              <div class="canvas-metric-box">
+                <span class="metric-glow-text" id="canvas-metric-value">+2,5% PIB</span>
+                <span class="metric-subtitle">Dato de Crecimiento Anualizado</span>
+              </div>
+
+              <!-- Puntos Clave -->
+              <div class="canvas-bullets-list">
+                <div class="canvas-bullet-item">
+                  <div class="bullet-icon-container">
+                    <span class="bullet-icon-check">✓</span>
+                  </div>
+                  <p class="bullet-text" id="canvas-bullet-1-text">Impulsado principalmente por las exportaciones de servicios y el consumo interno.</p>
+                </div>
+                <div class="canvas-bullet-item">
+                  <div class="bullet-icon-container">
+                    <span class="bullet-icon-check">✓</span>
+                  </div>
+                  <p class="bullet-text" id="canvas-bullet-2-text">Supera en 4 décimas la estimación anterior del Banco de España y el Ministerio.</p>
+                </div>
+                <div class="canvas-bullet-item">
+                  <div class="bullet-icon-container">
+                    <span class="bullet-icon-check">✓</span>
+                  </div>
+                  <p class="bullet-text" id="canvas-bullet-3-text">Sitúa a España a la cabeza del crecimiento entre las grandes economías del euro.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pie de página con atribución solicitada -->
+            <div class="canvas-footer">
+              <div class="footer-divider"></div>
+              <div class="footer-content">
+                <p>Creado por <span class="accent-link">http://mafede.i234.me</span> con ayuda de <span class="accent-link">Gemini</span></p>
+                <span class="footer-badge">Análisis Diario</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        
+        <p class="canvas-note">La imagen se exporta a 1080x1350 px sin importar la resolución de tu pantalla, optimizada para el algoritmo visual de LinkedIn.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer-page">
+    <p>PostLinkedIn Dashboard &copy; 2026. Diseñado para <a href="http://mafede.i234.me" target="_blank">mafede.i234.me</a> con tecnología Gemini.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

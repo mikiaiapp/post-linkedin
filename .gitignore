@@ -1,0 +1,6 @@
+node_modules/
+.env
+npm-debug.log
+.DS_Store
+# Conservar el historial de propuestas locales en git (opcional), pero si no quieres puedes descomentar:
+# proposals/

@@ -1,0 +1,26 @@
+{
+  "name": "post-linkedin-economico",
+  "version": "1.0.0",
+  "description": "Automatización diaria de posts de economía e infografías para LinkedIn",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "linkedin",
+    "automation",
+    "rss",
+    "scraper",
+    "infographic",
+    "economy"
+  ],
+  "author": "Antigravity & Gemini",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "rss-parser": "^3.13.0"
+  }
+}

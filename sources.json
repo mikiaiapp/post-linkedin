@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Expansión - Economía",
+    "url": "https://www.expansion.com/rss/economia.xml",
+    "category": "Economía General"
+  },
+  {
+    "name": "El Economista - Nacional",
+    "url": "https://www.eleconomista.es/rss/rss-economia.php",
+    "category": "Economía General"
+  },
+  {
+    "name": "Cinco Días - Economía",
+    "url": "https://cincodias.elpais.com/seccion/rss/economia/",
+    "category": "Economía & Finanzas"
+  },
+  {
+    "name": "El País - Economía",
+    "url": "https://elpais.com/rss/economia/portada.xml",
+    "category": "Macroeconomía"
+  },
+  {
+    "name": "El Mundo - Economía",
+    "url": "https://www.elmundo.es/rss/economia.xml",
+    "category": "Macroeconomía"
+  }
+]
