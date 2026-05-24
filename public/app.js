@@ -1,5 +1,5 @@
 // ==========================================================================
-// LÓGICA DE CONTROL - DASHBOARD POSTLINKEDIN
+// LÓGICA DE CONTROL AVANZADA - DASHBOARD POSTLINKEDIN
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,18 +12,48 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputHeadline = document.getElementById('info-headline');
   const inputCategory = document.getElementById('info-category');
   const inputMetric = document.getElementById('info-metric');
+  const inputMetricSub = document.getElementById('info-metric-sub');
   const inputSentiment = document.getElementById('info-sentiment');
+  
+  const inputCtxText = document.getElementById('info-ctx-text');
+  
   const inputBullet1 = document.getElementById('info-bullet-1');
   const inputBullet2 = document.getElementById('info-bullet-2');
   const inputBullet3 = document.getElementById('info-bullet-3');
   
+  const inputMkt1Name = document.getElementById('info-mkt-1-name');
+  const inputMkt1Trend = document.getElementById('info-mkt-1-trend');
+  
+  const inputMkt2Name = document.getElementById('info-mkt-2-name');
+  const inputMkt2Trend = document.getElementById('info-mkt-2-trend');
+  
+  const inputMkt3Name = document.getElementById('info-mkt-3-name');
+  const inputMkt3Trend = document.getElementById('info-mkt-3-trend');
+  
+  const inputSource = document.getElementById('info-source');
+
   // Elementos de la infografía (canvas)
   const canvasTag = document.getElementById('canvas-tag');
   const canvasTitle = document.getElementById('canvas-title-text');
   const canvasMetric = document.getElementById('canvas-metric-value');
+  const canvasMetricSub = document.getElementById('canvas-metric-sub');
+  
+  const canvasCtxText = document.getElementById('canvas-ctx-text');
+  
   const canvasBullet1 = document.getElementById('canvas-bullet-1-text');
   const canvasBullet2 = document.getElementById('canvas-bullet-2-text');
   const canvasBullet3 = document.getElementById('canvas-bullet-3-text');
+  
+  const canvasMkt1Name = document.getElementById('canvas-mkt-1-name');
+  const canvasMkt1Badge = document.getElementById('canvas-mkt-1-badge');
+  
+  const canvasMkt2Name = document.getElementById('canvas-mkt-2-name');
+  const canvasMkt2Badge = document.getElementById('canvas-mkt-2-badge');
+  
+  const canvasMkt3Name = document.getElementById('canvas-mkt-3-name');
+  const canvasMkt3Badge = document.getElementById('canvas-mkt-3-badge');
+  
+  const canvasFooterSource = document.getElementById('canvas-footer-source');
   
   // Post de LinkedIn
   const postTextarea = document.getElementById('linkedin-post-textarea');
@@ -39,10 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Feeds RSS y Noticias
   const scrapedNewsList = document.getElementById('scraped-news-list');
   const newsCountBadge = document.getElementById('news-count-badge');
-  const activeSourcesList = document.getElementById('active-sources-list');
-  const newSourceName = document.getElementById('new-source-name');
-  const newSourceUrl = document.getElementById('new-source-url');
-  const btnAddSource = document.getElementById('btn-add-source');
 
   // --- 1. Escalado del lienzo de infografía (1080x1350) ---
   function scaleCanvas() {
@@ -55,25 +81,58 @@ document.addEventListener('DOMContentLoaded', () => {
   // Escalado responsivo inicial y al redimensionar
   scaleCanvas();
   window.addEventListener('resize', scaleCanvas);
-  
-  // Un pequeño truco para volver a calibrar el escalado tras unos ms si la UI flex se ajusta
   setTimeout(scaleCanvas, 300);
 
   // --- 2. Sincronización en tiempo real (Inputs -> Canvas) ---
-  function syncInput(inputEl, canvasEl, maxLength = 250) {
-    inputEl.addEventListener('input', () => {
-      canvasEl.textContent = inputEl.value || '...';
-      // Ajustar escala en caso de cambios de tamaño dinámicos
-      scaleCanvas();
-    });
+  function syncInput(inputEl, canvasEl) {
+    if (inputEl && canvasEl) {
+      inputEl.addEventListener('input', () => {
+        canvasEl.textContent = inputEl.value || '...';
+        scaleCanvas();
+      });
+    }
   }
 
   syncInput(inputHeadline, canvasTitle);
   syncInput(inputCategory, canvasTag);
   syncInput(inputMetric, canvasMetric);
+  syncInput(inputMetricSub, canvasMetricSub);
+  syncInput(inputCtxText, canvasCtxText);
   syncInput(inputBullet1, canvasBullet1);
   syncInput(inputBullet2, canvasBullet2);
   syncInput(inputBullet3, canvasBullet3);
+  syncInput(inputMkt1Name, canvasMkt1Name);
+  syncInput(inputMkt2Name, canvasMkt2Name);
+  syncInput(inputMkt3Name, canvasMkt3Name);
+  syncInput(inputSource, canvasFooterSource);
+
+  // Sincronización de badges de tendencia
+  function syncTrendBadge(selectEl, badgeEl) {
+    if (selectEl && badgeEl) {
+      selectEl.addEventListener('change', () => {
+        updateTrendBadgeUI(selectEl.value, badgeEl);
+      });
+    }
+  }
+
+  function updateTrendBadgeUI(value, badgeEl) {
+    badgeEl.className = 'market-badge'; // Reset
+    if (value === 'up') {
+      badgeEl.classList.add('trend-up');
+      badgeEl.innerHTML = '<span class="trend-icon">⬆️</span> RENTABILIDAD';
+    } else if (value === 'down') {
+      badgeEl.classList.add('trend-down');
+      badgeEl.innerHTML = '<span class="trend-icon">⬇️</span> CORRECCIÓN';
+    } else {
+      badgeEl.classList.add('trend-neutral');
+      badgeEl.innerHTML = '<span class="trend-icon">➡️</span> ESTABLE';
+    }
+    scaleCanvas();
+  }
+
+  syncTrendBadge(inputMkt1Trend, canvasMkt1Badge);
+  syncTrendBadge(inputMkt2Trend, canvasMkt2Badge);
+  syncTrendBadge(inputMkt3Trend, canvasMkt3Badge);
 
   // Sincronización de Sentimiento / Tema
   inputSentiment.addEventListener('change', () => {
@@ -86,11 +145,15 @@ document.addEventListener('DOMContentLoaded', () => {
       canvas.classList.add('sentiment-positive');
       postSentimentIndicator.textContent = 'Noticia Positiva';
       postSentimentIndicator.className = 'sentiment-indicator positive';
+      // Tilted arm SVG (Balanza positiva)
+      document.getElementById('svg-scale-arm').setAttribute('transform', 'rotate(-12 100 50)');
     } else {
       canvas.classList.remove('sentiment-positive');
       canvas.classList.add('sentiment-negative');
       postSentimentIndicator.textContent = 'Noticia Negativa';
       postSentimentIndicator.className = 'sentiment-indicator negative';
+      // Tilted arm SVG (Balanza negativa)
+      document.getElementById('svg-scale-arm').setAttribute('transform', 'rotate(12 100 50)');
     }
   }
 
@@ -124,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     html2canvas(canvas, {
       width: 1080,
       height: 1350,
-      scale: 1, // Escala de imagen final (1 = 1080x1350 exacta)
+      scale: 1, // Escala de imagen final
       useCORS: true,
       allowTaint: true,
       backgroundColor: null
@@ -160,80 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const API_BASE = ''; // Relativo al host actual
 
-  // Cargar fuentes RSS activas
-  async function loadSources() {
-    try {
-      const response = await fetch(`${API_BASE}/api/sources`);
-      const sources = await response.json();
-      
-      activeSourcesList.innerHTML = '';
-      sources.forEach((source, index) => {
-        const item = document.createElement('div');
-        item.className = 'source-tag';
-        item.innerHTML = `
-          <div>
-            <span class="source-tag-name">${source.name}</span>
-            <span class="source-tag-url">${source.url}</span>
-          </div>
-          <button class="btn-remove-source" data-index="${index}" title="Eliminar fuente">&times;</button>
-        `;
-        activeSourcesList.appendChild(item);
-      });
-
-      // Añadir eventos para eliminar
-      document.querySelectorAll('.btn-remove-source').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const index = parseInt(e.target.getAttribute('data-index'));
-          sources.splice(index, 1);
-          await saveSourcesList(sources);
-        });
-      });
-
-    } catch (error) {
-      console.error('Error cargando fuentes RSS:', error);
-    }
-  }
-
-  // Guardar lista de fuentes
-  async function saveSourcesList(sources) {
-    try {
-      const response = await fetch(`${API_BASE}/api/sources`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sources)
-      });
-      if (response.ok) {
-        loadSources();
-      }
-    } catch (error) {
-      console.error('Error guardando fuentes RSS:', error);
-    }
-  }
-
-  // Añadir nueva fuente RSS
-  btnAddSource.addEventListener('click', async () => {
-    const name = newSourceName.value.trim();
-    const url = newSourceUrl.value.trim();
-    
-    if (!name || !url) {
-      alert('Por favor, rellena el nombre y la URL del feed RSS.');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE}/api/sources`);
-      const sources = await response.json();
-      sources.push({ name, url, category: 'Personalizada' });
-      
-      await saveSourcesList(sources);
-      
-      newSourceName.value = '';
-      newSourceUrl.value = '';
-    } catch (error) {
-      console.error('Error añadiendo fuente RSS:', error);
-    }
-  });
-
   // Cargar y escudriñar noticias económicas
   async function syncAndLoadNews() {
     scrapedNewsList.innerHTML = `
@@ -268,11 +257,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="news-item-snippet">${item.snippet}</p>
         `;
         
-        // Al hacer clic en una noticia, ayudar a rellenar el editor rápidamente por si el usuario quiere cambiar
+        // Al hacer clic en una noticia, ayudar a rellenar el editor rápidamente
         card.addEventListener('click', () => {
-          if (confirm(`¿Quieres utilizar el titular "${item.title}" para tu infografía de hoy? (Esto sustituirá los textos actuales del editor)`)) {
-            inputHeadline.value = item.title;
-            canvasTitle.textContent = item.title;
+          if (confirm(`¿Quieres utilizar el titular "${item.title}" para tu infografía de hoy?`)) {
+            inputHeadline.value = item.title.toUpperCase();
+            canvasTitle.textContent = item.title.toUpperCase();
             inputCategory.value = item.sourceCategory.toUpperCase();
             canvasTag.textContent = item.sourceCategory.toUpperCase();
             scaleCanvas();
@@ -302,9 +291,18 @@ document.addEventListener('DOMContentLoaded', () => {
         category: inputCategory.value,
         sentiment: inputSentiment.checked,
         metric: inputMetric.value,
+        metricSub: inputMetricSub.value,
+        ctxText: inputCtxText.value,
         bullet1: inputBullet1.value,
         bullet2: inputBullet2.value,
-        bullet3: inputBullet3.value
+        bullet3: inputBullet3.value,
+        mkt1Name: inputMkt1Name.value,
+        mkt1Trend: inputMkt1Trend.value,
+        mkt2Name: inputMkt2Name.value,
+        mkt2Trend: inputMkt2Trend.value,
+        mkt3Name: inputMkt3Name.value,
+        mkt3Trend: inputMkt3Trend.value,
+        sourceText: inputSource.value
       }
     };
 
@@ -316,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const resData = await response.json();
       if (resData.success) {
-        alert('¡Propuesta guardada correctamente en el historial!');
+        alert('¡Propuesta avanzada guardada correctamente en tu NAS!');
       } else {
         alert('Error: ' + resData.error);
       }
@@ -343,17 +341,44 @@ document.addEventListener('DOMContentLoaded', () => {
         inputCategory.value = info.category || '';
         inputSentiment.checked = info.sentiment !== undefined ? info.sentiment : true;
         inputMetric.value = info.metric || '';
+        inputMetricSub.value = info.metricSub || '';
+        
+        inputCtxText.value = info.ctxText || '';
+        
         inputBullet1.value = info.bullet1 || '';
         inputBullet2.value = info.bullet2 || '';
         inputBullet3.value = info.bullet3 || '';
+        
+        inputMkt1Name.value = info.mkt1Name || '';
+        inputMkt1Trend.value = info.mkt1Trend || 'down';
+        
+        inputMkt2Name.value = info.mkt2Name || '';
+        inputMkt2Trend.value = info.mkt2Trend || 'up';
+        
+        inputMkt3Name.value = info.mkt3Name || '';
+        inputMkt3Trend.value = info.mkt3Trend || 'down';
+        
+        inputSource.value = info.sourceText || '';
         
         // Sincronizar Canvas
         canvasTitle.textContent = info.headline || '...';
         canvasTag.textContent = info.category || '...';
         canvasMetric.textContent = info.metric || '...';
+        canvasMetricSub.textContent = info.metricSub || '...';
+        canvasCtxText.textContent = info.ctxText || '...';
         canvasBullet1.textContent = info.bullet1 || '...';
         canvasBullet2.textContent = info.bullet2 || '...';
         canvasBullet3.textContent = info.bullet3 || '...';
+        
+        canvasMkt1Name.textContent = info.mkt1Name || '...';
+        canvasMkt2Name.textContent = info.mkt2Name || '...';
+        canvasMkt3Name.textContent = info.mkt3Name || '...';
+        
+        canvasFooterSource.textContent = info.sourceText || '...';
+        
+        updateTrendBadgeUI(inputMkt1Trend.value, canvasMkt1Badge);
+        updateTrendBadgeUI(inputMkt2Trend.value, canvasMkt2Badge);
+        updateTrendBadgeUI(inputMkt3Trend.value, canvasMkt3Badge);
         
         updateSentimentTheme(inputSentiment.checked);
         scaleCanvas();
@@ -364,7 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- 6. Inicialización ---
-  loadSources();
   loadLatestProposal();
   syncAndLoadNews();
 

@@ -1,14 +1,23 @@
 {
   "date": "2026-05-24",
-  "updatedAt": "2026-05-24T12:42:00.000Z",
+  "updatedAt": "2026-05-24T16:45:00.000Z",
   "postText": "🚀 **¿Es España el motor económico indiscutible de la eurozona para 2026?** \n\nLos nuevos datos macroeconómicos apuntan a una realidad incontestable. Mientras el conjunto de la eurozona navega en un crecimiento tímido del 0,9%, la Comisión Europea acaba de revisar al alza la previsión de crecimiento de **España hasta el 2,4% para este año**.\n\nComo economista, analizar estas cifras nos deja varias lecturas clave de por qué nuestro modelo está mostrando esta resiliencia tan singular frente a un entorno geopolítico tan volátil:\n\n1️⃣ **La fuerza de la demanda interna:** El consumo de los hogares españoles se mantiene robusto, amortiguando de forma notable el impacto del encarecimiento de los costes energéticos internacionales.\n2️⃣ **Liderazgo en el bloque europeo:** Crecer al 2,4% sitúa a España a la cabeza de las grandes economías del euro, duplicando holgadamente el desempeño de gigantes como Alemania o Francia.\n3️⃣ **Pilares del sector servicios:** El turismo y la dinámica de la contratación interna continúan siendo los grandes catalizadores de esta inercia alcista.\n\n⚠️ **No todo son vientos de cola:** La inflación subyacente en torno al 3,0% y la volatilidad del crudo en Oriente Próximo exigen una vigilancia estrecha del coste de la vida y el consumo. Además, la consolidación fiscal recomendada por el FMI será un reto crucial para estabilizar la deuda por debajo del 100% del PIB.\n\n¿Estamos ante un ciclo expansivo sostenible o es un espejismo coyuntural impulsado por los servicios? Abro debate en comentarios. 👇\n\n---\n📊 **Infografía completa adjunta abajo.**\nCreado por http://mafede.i234.me con ayuda de Gemini.",
   "infographicData": {
-    "headline": "La Comisión Europea eleva el crecimiento de España al 2,4% liderando el bloque del euro",
+    "headline": "LIDERAZGO EUROPEO: ESPAÑA CRECERÁ UN 2,4% EN 2026 Y SE SITÚA A LA CABEZA DEL EURO",
     "category": "MACROECONOMÍA",
     "sentiment": true,
     "metric": "+2,4% PIB",
-    "bullet1": "España superará en más del doble la media de crecimiento de la eurozona (estimada en 0,9%).",
-    "bullet2": "Impulsado por la sólida demanda interna, el fuerte consumo de los hogares y la resiliencia del sector servicios.",
-    "bullet3": "Consolidación del mercado laboral y reducción progresiva de la ratio de deuda pública hacia el 99,3%."
+    "metricSub": "PREVISIÓN DE CRECIMIENTO ANUAL",
+    "ctxText": "La Comisión Europea ha revisado fuertemente al alza sus previsiones de crecimiento para España en 2026. Esta subida sitúa a nuestro país a la cabeza de la expansión de las grandes economías de la eurozona, impulsada por una sólida inercia interna frente al estancamiento de otros socios comerciales.",
+    "bullet1": "<strong>Consumo:</strong> Gran dinamismo de la demanda interna y el gasto de los hogares como principales catalizadores.",
+    "bullet2": "<strong>Eurozona:</strong> España registrará un crecimiento que duplica la media proyectada de la eurozona (0,9%).",
+    "bullet3": "<strong>Empleo:</strong> Consolidación de la contratación laboral e inercia de reducción del desempleo hacia el 9,7%.",
+    "mkt1Name": "Renta Variable (IBEX 35)",
+    "mkt1Trend": "up",
+    "mkt2Name": "Deuda Soberana (Bono 10Y)",
+    "mkt2Trend": "neutral",
+    "mkt3Name": "Euro (EUR/USD)",
+    "mkt3Trend": "up",
+    "sourceText": "Fuente: Comisión Europea, Banco de España, FMI | Mayo 2026"
   }
 }
