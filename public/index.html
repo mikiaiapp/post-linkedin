@@ -61,6 +61,29 @@
         </div>
       </div>
 
+      <!-- Card: Configuración de la Inteligencia Artificial (Dinamismo de Modelos) -->
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-icon">🤖</span>
+          <h2>Configuración de la Inteligencia Artificial</h2>
+        </div>
+        <div class="card-body form-grid">
+          <div class="form-group">
+            <label for="info-ai-model">Modelo a Utilizar</label>
+            <select id="info-ai-model">
+              <option value="gemini-3.5-flash" selected>(Recomendado) Gemini 3.5 Flash</option>
+              <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+              <option value="custom">Otro (Escribir personalizado...)</option>
+            </select>
+          </div>
+          <div class="form-group" id="custom-model-group" style="display: none;">
+            <label for="info-ai-model-custom">Identificador del Modelo</label>
+            <input type="text" id="info-ai-model-custom" placeholder="Ej. gemini-4.0-flash">
+          </div>
+        </div>
+      </div>
+
       <!-- Card: Editor de la Infografía (Actualizado para el diseño denso) -->
       <div class="glass-card">
         <div class="card-header">
@@ -241,34 +264,37 @@
                 <div class="kpi-mini-badge">NUEVO MÁXIMO HISTÓRICO</div>
               </div>
 
-              <!-- Ilustración / Elemento Visual 3D a la Derecha (Balanza de Deuda con SVG nítido) -->
+              <!-- Ilustración / Elemento Visual 3D de Alto Impacto generado por Nano Banana 2 -->
               <div class="canvas-visual-card">
-                <svg viewBox="0 0 200 160" class="canvas-3d-svg">
-                  <!-- Base de la balanza -->
-                  <path d="M70 140 H130 L120 150 H80 Z" fill="#64748b" />
-                  <rect x="96" y="50" width="8" height="90" fill="#94a3b8" />
-                  <!-- Brazo basculante (Tilted) -->
-                  <g transform="rotate(12 100 50)" id="svg-scale-arm">
-                    <line x1="20" y1="50" x2="180" y2="50" stroke="#f1f5f9" stroke-width="4" />
-                    <!-- Plato Izquierdo (Deuda - Pesado/Bajo) -->
-                    <line x1="25" y1="50" x2="25" y2="90" stroke="#f43f5e" stroke-width="2" />
-                    <line x1="25" y1="90" x2="5" y2="90" stroke="#f43f5e" stroke-width="2" />
-                    <path d="M5 90 Q25 110 45 90 Z" fill="rgba(244,63,94,0.2)" stroke="#f43f5e" stroke-width="2" />
-                    <!-- Monedas apiladas en plato izquierdo -->
-                    <rect x="15" y="70" width="20" height="20" rx="3" fill="#eab308" />
-                    <rect x="20" y="60" width="10" height="10" rx="2" fill="#ca8a04" />
-                    
-                    <!-- Plato Derecho (PIB - Ligero/Alto) -->
-                    <line x1="175" y1="50" x2="175" y2="70" stroke="#10b981" stroke-width="2" />
-                    <line x1="175" y1="70" x2="155" y2="70" stroke="#10b981" stroke-width="2" />
-                    <path d="M155 70 Q175 90 195 70 Z" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="2" />
-                    <!-- Pesitas en plato derecho -->
-                    <circle cx="175" cy="65" r="5" fill="#3b82f6" />
-                  </g>
-                  <!-- Fulcro central -->
-                  <polygon points="100,42 92,54 108,54" fill="#f8fafc" />
-                </svg>
-                <div class="visual-card-caption">La deuda pública supera el tamaño de la economía nacional por primera vez desde la IGM.</div>
+                <div class="canvas-artwork-container">
+                  <img src="proposals/latest_artwork.png" id="canvas-artwork-img" class="canvas-artwork-image" alt="Visualización del Análisis" onerror="this.style.display='none'; document.getElementById('canvas-fallback-svg').style.display='block';">
+                  <svg viewBox="0 0 200 160" class="canvas-3d-svg" id="canvas-fallback-svg" style="display: none;">
+                    <!-- Base de la balanza -->
+                    <path d="M70 140 H130 L120 150 H80 Z" fill="#64748b" />
+                    <rect x="96" y="50" width="8" height="90" fill="#94a3b8" />
+                    <!-- Brazo basculante (Tilted) -->
+                    <g transform="rotate(12 100 50)" id="svg-scale-arm">
+                      <line x1="20" y1="50" x2="180" y2="50" stroke="#f1f5f9" stroke-width="4" />
+                      <!-- Plato Izquierdo (Deuda - Pesado/Bajo) -->
+                      <line x1="25" y1="50" x2="25" y2="90" stroke="#f43f5e" stroke-width="2" />
+                      <line x1="25" y1="90" x2="5" y2="90" stroke="#f43f5e" stroke-width="2" />
+                      <path d="M5 90 Q25 110 45 90 Z" fill="rgba(244,63,94,0.2)" stroke="#f43f5e" stroke-width="2" />
+                      <!-- Monedas apiladas en plato izquierdo -->
+                      <rect x="15" y="70" width="20" height="20" rx="3" fill="#eab308" />
+                      <rect x="20" y="60" width="10" height="10" rx="2" fill="#ca8a04" />
+                      
+                      <!-- Plato Derecho (PIB - Ligero/Alto) -->
+                      <line x1="175" y1="50" x2="175" y2="70" stroke="#10b981" stroke-width="2" />
+                      <line x1="175" y1="70" x2="155" y2="70" stroke="#10b981" stroke-width="2" />
+                      <path d="M155 70 Q175 90 195 70 Z" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="2" />
+                      <!-- Pesitas en plato derecho -->
+                      <circle cx="175" cy="65" r="5" fill="#3b82f6" />
+                    </g>
+                    <!-- Fulcro central -->
+                    <polygon points="100,42 92,54 108,54" fill="#f8fafc" />
+                  </svg>
+                </div>
+                <div class="visual-card-caption" id="canvas-artwork-caption">La deuda pública supera el tamaño de la economía nacional por primera vez desde la IGM.</div>
               </div>
             </div>
 

@@ -32,6 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const inputSource = document.getElementById('info-source');
 
+  // Configuración de la IA
+  const inputAIModel = document.getElementById('info-ai-model');
+  const inputAIModelCustom = document.getElementById('info-ai-model-custom');
+  const customModelGroup = document.getElementById('custom-model-group');
+
   // Elementos de la infografía (canvas)
   const canvasTag = document.getElementById('canvas-tag');
   const canvasTitle = document.getElementById('canvas-title-text');
@@ -133,6 +138,22 @@ document.addEventListener('DOMContentLoaded', () => {
   syncTrendBadge(inputMkt1Trend, canvasMkt1Badge);
   syncTrendBadge(inputMkt2Trend, canvasMkt2Badge);
   syncTrendBadge(inputMkt3Trend, canvasMkt3Badge);
+
+  // Alternar visualización de modelo personalizado en base a selección
+  inputAIModel.addEventListener('change', () => {
+    if (inputAIModel.value === 'custom') {
+      customModelGroup.style.display = 'flex';
+    } else {
+      customModelGroup.style.display = 'none';
+    }
+  });
+
+  function getSelectedAIModel() {
+    if (inputAIModel.value === 'custom') {
+      return inputAIModelCustom.value.trim() || 'gemini-3.5-flash';
+    }
+    return inputAIModel.value;
+  }
 
   // Sincronización de Sentimiento / Tema
   inputSentiment.addEventListener('change', () => {
@@ -321,7 +342,8 @@ document.addEventListener('DOMContentLoaded', () => {
               body: JSON.stringify({
                 title: item.title,
                 snippet: item.snippet,
-                sourceName: item.sourceName
+                sourceName: item.sourceName,
+                model: getSelectedAIModel() // Envía el modelo dinámico a la API
               })
             });
 
