@@ -12,3 +12,5 @@ services:
     volumes:
       - /volume1/docker/postlinkedin/proposals:/usr/src/app/proposals
       - /volume1/docker/postlinkedin/sources.json:/usr/src/app/sources.json
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
