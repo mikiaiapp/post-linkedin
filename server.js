@@ -368,7 +368,7 @@ app.post('/api/proposals/generate', async (req, res) => {
 
 // 8. Infografía como imagen generada por la IA (trabajo en segundo plano: tarda de 20 a 90 s)
 const trabajosImagen = new Map();   // id -> { userId, estado: 'en curso' | 'listo' | 'error', error, inicio }
-const IMAGEN_PRO = 'gemini-3-pro-image-preview';
+const IMAGEN_POR_DEFECTO = 'gemini-nano-banana-2.1';   // Nano Banana 2.1 (octubre 2026); alternativa de más fidelidad: gemini-3-pro-image
 
 function carpetaPropuestas(user) { return path.join(auth.getUserDir(user), 'proposals'); }
 function ficheroImagen(user) {
@@ -383,7 +383,7 @@ app.post('/api/infographic/image', (req, res) => {
   const enCurso = [...trabajosImagen.values()].find((j) => j.userId === req.user.id && j.estado === 'en curso' && Date.now() - j.inicio < 300000);
   if (enCurso) return res.status(409).json({ success: false, error: 'Ya hay una imagen generándose; espera a que termine.' });
 
-  const model = /^[\w.\-]{1,60}$/.test(req.body.model || '') ? req.body.model : IMAGEN_PRO;
+  const model = /^[\w.\-]{1,60}$/.test(req.body.model || '') ? req.body.model : IMAGEN_POR_DEFECTO;
   let prompt = String(req.body.prompt || '').trim().slice(0, 4000);
   if (!prompt) prompt = imagen.construirPromptImagen(req.body.infographicData || {});
   if (!prompt.includes('mafede.i234.me')) prompt += `\nAl pie, en letra pequeña: "${imagen.FIRMA}".`;
