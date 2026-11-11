@@ -77,6 +77,13 @@ function getGeminiKey(user) {
   return user.geminiKeyEnc ? decryptSecret(user.geminiKeyEnc) : null;
 }
 
+// Hay una clave guardada pero no se puede descifrar (casi siempre porque cambió JWT_SECRET): el usuario debe volver a escribirla
+function geminiKeyIlegible(user) {
+  const ilegible = !!user.geminiKeyEnc && getGeminiKey(user) === null;
+  if (ilegible) console.error(`[AVISO] La clave de Gemini guardada de un usuario no se puede descifrar: ¿ha cambiado JWT_SECRET desde que se guardó? Debe volver a escribirla.`);
+  return ilegible;
+}
+
 // --- Middleware de sesión ---
 function authenticateToken(req, res, next) {
   const header = req.headers['authorization'];
@@ -264,6 +271,7 @@ secured.get('/me', (req, res) => {
     username: u.username,
     twoFactorEnabled: !!u.twoFactorEnabled,
     hasGeminiKey: !!u.geminiKeyEnc,
+    geminiKeyReadable: !u.geminiKeyEnc || getGeminiKey(u) !== null,
     geminiKeyLast4: u.geminiKeyLast4 || null
   });
 });
@@ -382,4 +390,4 @@ secured.delete('/gemini-key', (req, res) => {
 
 router.use(secured);
 
-module.exports = { router, authenticateToken, getUserDir, getGeminiKey, validateEmail };
+module.exports = { router, authenticateToken, getUserDir, getGeminiKey, geminiKeyIlegible, validateEmail };

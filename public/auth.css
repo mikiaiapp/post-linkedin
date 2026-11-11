@@ -83,3 +83,6 @@
 
 /* Noticias: insignia de impacto (últimas 24 h) */
 .news-item-impact { font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(244, 63, 94, 0.15); color: var(--accent); white-space: nowrap; }
+
+/* Campo de clave: enmascarado pero NO de tipo contraseña, para que el gestor de contraseñas del navegador no lo rellene solo */
+.secret-input { -webkit-text-security: disc; text-security: disc; font-family: text-security-disc, sans-serif; }

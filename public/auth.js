@@ -205,9 +205,10 @@
         <p class="auth-hint">${esc(me.username)}</p>
 
         <h3>Clave de Gemini</h3>
+        ${me.hasGeminiKey && me.geminiKeyReadable === false ? '<p class="auth-msg err">⚠️ La clave guardada ya no se puede leer (se cambió la clave de cifrado del servidor). Escribe tu clave otra vez y pulsa Guardar.</p>' : ''}
         <p class="auth-hint">${me.hasGeminiKey ? `Guardada (termina en …${esc(me.geminiKeyLast4 || '')}). Se almacena cifrada en el servidor y solo tú la usas.` : 'Aún no hay ninguna clave guardada.'} <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Obtener clave gratis ↗</a></p>
         <form id="p-key-form" class="auth-form">
-          <input type="password" id="p-key" placeholder="${me.hasGeminiKey ? 'Pega una clave nueva para cambiarla' : 'Pega tu clave API de Gemini'}" autocomplete="off">
+          <input type="text" id="p-key" class="secret-input" name="gemini-api-key" data-lpignore="true" data-1p-ignore="true" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="${me.hasGeminiKey ? 'Pega una clave nueva para cambiarla' : 'Pega tu clave API de Gemini'}" autocomplete="off">
           <div class="auth-row"><button class="btn btn-primary" type="submit">Guardar clave</button><button class="btn btn-secondary" type="button" id="p-key-test">Probar</button>${me.hasGeminiKey ? '<button class="btn btn-secondary" type="button" id="p-key-del">Borrar</button>' : ''}</div>
         </form>
 

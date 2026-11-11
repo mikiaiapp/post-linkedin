@@ -272,17 +272,20 @@ app.get('/api/proposals/:date', (req, res) => {
   }
 });
 
+const MENSAJE_CLAVE_ILEGIBLE = 'Tu clave de Gemini guardada ya no se puede leer (se guardó con otra clave de cifrado: suele ocurrir si cambió JWT_SECRET). Vuelve a escribirla en Mi perfil y pulsa Guardar.';
+
 // 6b. Probar la clave de Gemini (la que se escribe en el momento o, si no, la guardada del usuario)
 app.post('/api/gemini-key/test', async (req, res) => {
   const typed = String(req.body.key || '').trim();
   const apiKey = typed || auth.getGeminiKey(req.user);
   const which = typed ? 'escrita' : 'guardada';
   if (!apiKey) {
+    if (auth.geminiKeyIlegible(req.user)) return res.status(400).json({ success: false, error: MENSAJE_CLAVE_ILEGIBLE });
     return res.status(400).json({ success: false, error: 'No hay ninguna clave que probar: escribe una o guárdala antes.' });
   }
   const model = /^[\w.\-]{1,60}$/.test(req.body.model || '') ? req.body.model : 'gemini-3.5-flash';
   try {
-    const result = await new GoogleGenerativeAI(apiKey).getGenerativeModel({ model }).generateContent('Responde solo con la palabra OK');
+    const result = await new GoogleGenerativeAI(apiKey).getGenerativeModel({ model }, process.env.GEMINI_BASE_URL ? { baseUrl: process.env.GEMINI_BASE_URL } : undefined).generateContent('Responde solo con la palabra OK');
     result.response.text();
     res.json({ success: true, model, which });
   } catch (error) {
@@ -318,6 +321,7 @@ app.post('/api/proposals/generate', async (req, res) => {
   const apiKey = auth.getGeminiKey(req.user);
 
   if (!apiKey) {
+    if (auth.geminiKeyIlegible(req.user)) return res.status(400).json({ success: false, error: MENSAJE_CLAVE_ILEGIBLE });
     return res.status(400).json({
       success: false,
       error: 'Falta tu clave API de Gemini. Añádela en tu perfil (menú de usuario → Mi perfil).'
@@ -426,6 +430,7 @@ app.post('/api/proposals/generate', async (req, res) => {
 
   } catch (error) {
     console.error('Error generando propuesta con Gemini:', error);
+    if (/API key not valid|API_KEY_INVALID/i.test(String(error.message))) return res.status(400).json({ success: false, error: 'Google rechaza tu clave de Gemini (no es válida). Pruébala en Mi perfil → Probar y, si falla, escribe una nueva.' });
     res.status(500).json({ success: false, error: 'Error interno en la generación de la IA: ' + error.message });
   }
 });
@@ -443,6 +448,7 @@ function ficheroImagen(user) {
 
 app.post('/api/infographic/image', (req, res) => {
   const apiKey = auth.getGeminiKey(req.user);
+  if (!apiKey && auth.geminiKeyIlegible(req.user)) return res.status(400).json({ success: false, error: MENSAJE_CLAVE_ILEGIBLE });
   if (!apiKey) return res.status(400).json({ success: false, error: 'Falta tu clave API de Gemini. Añádela en tu perfil (menú de usuario → Mi perfil).' });
   const enCurso = [...trabajosImagen.values()].find((j) => j.userId === req.user.id && j.estado === 'en curso' && Date.now() - j.inicio < 300000);
   if (enCurso) return res.status(409).json({ success: false, error: 'Ya hay una imagen generándose; espera a que termine.' });
