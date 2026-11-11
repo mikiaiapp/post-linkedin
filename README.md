@@ -9,6 +9,9 @@ Este proyecto automatiza la recopilación de prensa económica española de prim
 1.  **Scraping y Consolidación de Prensa Matutina:**
     Escanea en tiempo real los principales diarios económicos de España: *Expansión*, *El Economista*, *Cinco Días*, *El País Economía* y *El Mundo Economía*.
     Las noticias salen **ordenadas por impacto en las últimas 24 horas**: cuántos diarios distintos cubren el mismo tema (🔥 *N diarios*), la frescura y la presencia de temas clave (IPC, tipos, aranceles, deuda…). Las de más de 24 horas van después, por fecha.
+    La lista ocupa **toda la anchura** de la pantalla, con búsqueda, filtro por fuente, orden (impacto o más recientes) y «solo últimas 24 h».
+    **Fuentes RSS por usuario:** el botón «⚙️ Fuentes» permite añadir (con prueba previa), quitar y editar las fuentes de cada usuario, o volver a las de por defecto (`sources.json`). Por seguridad, el servidor solo lee direcciones públicas: nunca las de la red interna.
+    **Noticia por enlace:** pega la dirección de cualquier noticia y pulsa «Traer noticia»: se lee el título, el resumen y los primeros párrafos para que los revises y generes el post. Si el sitio bloquea la lectura automática, usa «Pegar texto».
 2.  **Redacción con Tono Profesional de Economista:**
     Crea posts estructurados con ganchos comerciales, viñetas analíticas claras, emoticonos, hashtags discretos e hipervínculos requeridos.
 3.  **Lienzo de Infografía de Alta Resolución (1080 x 1350 px):**

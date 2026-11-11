@@ -8,6 +8,7 @@ require('dotenv').config();
 const auth = require('./auth');
 const { ordenarPorImpacto } = require('./ranking');
 const imagen = require('./imagen');
+const noticias = require('./noticias');
 const crypto = require('crypto');
 
 const app = express();
@@ -103,29 +104,90 @@ function saveSources(sources) {
 
 // --- Endpoints de la API ---
 
-// 1. Obtener la lista de fuentes configuradas
+// Fuentes RSS por usuario: cada uno puede tener las suyas (users/<id>/sources.json); si no, las de la instalación (sources.json)
+function ficheroFuentes(user) { return path.join(auth.getUserDir(user), 'sources.json'); }
+
+function fuentesDe(user) {
+  try {
+    const f = ficheroFuentes(user);
+    if (fs.existsSync(f)) {
+      const data = JSON.parse(fs.readFileSync(f, 'utf-8'));
+      if (Array.isArray(data) && data.length) return { sources: data, custom: true };
+    }
+  } catch (e) { console.error('Error leyendo las fuentes del usuario:', e.message); }
+  return { sources: getSources(), custom: false };
+}
+
+// Valida y limpia una lista de fuentes antes de guardarla
+async function sanearFuentes(lista) {
+  if (!Array.isArray(lista) || !lista.length) throw new Error('Añade al menos una fuente.');
+  if (lista.length > 30) throw new Error('Máximo 30 fuentes.');
+  const vistas = new Set();
+  const out = [];
+  for (const f of lista) {
+    const u = await noticias.urlSegura(f && f.url);
+    if (vistas.has(u.href)) continue;
+    vistas.add(u.href);
+    out.push({ name: String(f.name || u.hostname).trim().slice(0, 60), url: u.href, category: String(f.category || 'Economía').trim().slice(0, 40) });
+  }
+  return out;
+}
+
+// 1. Fuentes configuradas del usuario
 app.get('/api/sources', (req, res) => {
-  res.json(getSources());
+  res.json(fuentesDe(req.user));
 });
 
-// 2. Añadir/Actualizar fuentes
-app.post('/api/sources', (req, res) => {
-  const newSources = req.body;
-  if (Array.isArray(newSources)) {
-    if (saveSources(newSources)) {
-      return res.json({ success: true, message: 'Fuentes actualizadas correctamente.' });
-    }
+// 2. Guardar las fuentes del usuario (acepta {sources: [...]} o directamente la lista)
+const guardarFuentes = async (req, res) => {
+  try {
+    const lista = await sanearFuentes(Array.isArray(req.body) ? req.body : req.body && req.body.sources);
+    fs.writeFileSync(ficheroFuentes(req.user), JSON.stringify(lista, null, 2), 'utf-8');
+    res.json({ success: true, sources: lista, custom: true });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
   }
-  res.status(400).json({ success: false, error: 'Formato inválido. Debe ser una lista de fuentes.' });
+};
+app.put('/api/sources', guardarFuentes);
+app.post('/api/sources', guardarFuentes);
+
+// 2b. Volver a las fuentes por defecto
+app.delete('/api/sources', (req, res) => {
+  fs.rmSync(ficheroFuentes(req.user), { force: true });
+  res.json({ success: true, ...fuentesDe(req.user) });
+});
+
+// 2c. Probar una fuente RSS antes de añadirla
+app.post('/api/sources/test', async (req, res) => {
+  try {
+    const u = await noticias.urlSegura(req.body && req.body.url);
+    const feed = await parser.parseURL(u.href);
+    res.json({ success: true, titulo: feed.title || u.hostname, noticias: (feed.items || []).length, ejemplo: ((feed.items || [])[0] || {}).title || '' });
+  } catch (e) {
+    res.status(400).json({ success: false, error: `No se pudo leer ese RSS: ${String(e.message).slice(0, 160)}` });
+  }
+});
+
+// 2d. Traer una noticia concreta a partir de su enlace (para publicar algo que no sale en la lista)
+app.post('/api/news/from-url', async (req, res) => {
+  try {
+    const { html, url } = await noticias.descargarPagina(req.body && req.body.url);
+    const n = noticias.extraerNoticia(html, url);
+    if (!n.title && !n.snippet) return res.status(422).json({ success: false, error: 'No he podido leer el contenido de esa página; pega el título y el texto a mano.' });
+    res.json({ success: true, news: { ...n, sourceCategory: 'Noticia manual', pubDate: null } });
+  } catch (e) {
+    res.status(400).json({ success: false, error: `${e.message} Puedes pegar el título y el texto a mano.` });
+  }
 });
 
 // 3. Scrapear las noticias de los diarios
 app.get('/api/news', async (req, res) => {
-  const sources = getSources();
+  const sources = fuentesDe(req.user).sources;
   const aggregatedNews = [];
 
   const scrapePromises = sources.map(async (source) => {
     try {
+      await noticias.urlSegura(source.url);   // nunca pedir direcciones de la red interna
       const feed = await parser.parseURL(source.url);
       feed.items.forEach(item => {
         aggregatedNews.push({
@@ -249,7 +311,9 @@ function normalizarInfografia(info) {
 
 // 7. Generar propuesta bajo demanda utilizando la API oficial de Gemini (JSON estructurado)
 app.post('/api/proposals/generate', async (req, res) => {
-  const { title, snippet, sourceName, model: requestedModel } = req.body;
+  const { sourceName, model: requestedModel } = req.body;
+  const title = String(req.body.title || '').slice(0, 300);
+  const snippet = String(req.body.snippet || '').slice(0, 4000);
   // Cada usuario usa su propia clave de Gemini, guardada cifrada en su cuenta
   const apiKey = auth.getGeminiKey(req.user);
 

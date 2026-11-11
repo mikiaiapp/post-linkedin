@@ -45,16 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const postSentimentIndicator = document.getElementById('post-sentiment-indicator');
   
   // Botones
-  const btnSyncNews = document.getElementById('btn-sync-news');
-  const btnRefreshNewsCard = document.getElementById('btn-refresh-news-card');
   const btnCopyPost = document.getElementById('btn-copy-post');
   const btnSaveProposal = document.getElementById('btn-save-proposal');
   const btnDownloadInfo = document.getElementById('btn-download-infographic');
   
-  // Feeds RSS y Noticias
-  const scrapedNewsList = document.getElementById('scraped-news-list');
-  const newsCountBadge = document.getElementById('news-count-badge');
-
   // --- 1. Escalado del lienzo de infografía (1080x1350) ---
   function scaleCanvas() {
     const scaleX = viewport.clientWidth / 1080;
@@ -499,131 +493,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Cargar y escudriñar noticias económicas
-  async function syncAndLoadNews() {
-    scrapedNewsList.innerHTML = `
-      <div class="loading-state">
-        <span class="spinner">⏳</span>
-        <p>Scrapeando portadas de la prensa económica española en vivo...</p>
-      </div>
-    `;
-    newsCountBadge.textContent = 'Cargando...';
+  // --- Generar post e infografía a partir de una noticia (la elige news.js: lista, búsqueda o enlace) ---
+  async function generateFromItem(item) {
+    if (!confirm('¿Quieres generar un post completo y diseñar su infografía para esta noticia usando Gemini?')) return;
 
+    showLoadingOverlay('Generando post e infografía premium con la Inteligencia de Gemini...');
     try {
-      const response = await fetch(`${API_BASE}/api/news`);
-      const news = await response.json();
-      
-      scrapedNewsList.innerHTML = '';
-      const recientes = news.filter(n => n.impacto && n.impacto.reciente).length;
-      newsCountBadge.textContent = `${news.length} noticias · ${recientes} en 24 h`;
-
-      if (news.length === 0) {
-        scrapedNewsList.innerHTML = '<p class="section-desc">No se encontraron noticias. Revisa los feeds RSS.</p>';
-        return;
-      }
-
-      news.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'news-item';
-        card.innerHTML = `
-          <div class="news-item-header">
-            <span class="news-item-source">${item.sourceName}</span>
-            ${item.impacto && item.impacto.reciente ? `<span class="news-item-impact" title="Ordenadas por impacto en las últimas 24 horas">${item.impacto.diarios > 1 ? `🔥 ${item.impacto.diarios} diarios` : '🕒 24 h'}</span>` : ''}
-            <span class="news-item-date">${item.pubDate ? new Date(item.pubDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Hoy'}</span>
-          </div>
-          <h3 class="news-item-title">${item.title}</h3>
-          <p class="news-item-snippet">${item.snippet}</p>
-          <div class="news-item-actions">
-            <button class="btn btn-primary btn-generate-ai" style="margin-top: 10px; width: 100%; font-size: 0.8rem; padding: 0.55rem 1rem;">
-              ⚡ Generar Post e Infografía con IA
-            </button>
-          </div>
-        `;
-        
-        // Al hacer clic en una noticia simple, rellenar el titular
-        card.addEventListener('click', (e) => {
-          // Evitar que el clic en el botón de generar propague al contenedor
-          if (e.target.classList.contains('btn-generate-ai')) return;
-
-          if (confirm(`¿Quieres utilizar el titular "${item.title}" para tu infografía de hoy?`)) {
-            canvasTitle.textContent = item.title.toUpperCase();
-            canvasTag.textContent = item.sourceCategory.toUpperCase();
-            scaleCanvas();
-          }
-        });
-
-        // Botón de generación con Inteligencia Artificial (Gemini)
-        const btnGen = card.querySelector('.btn-generate-ai');
-        btnGen.addEventListener('click', async (e) => {
-          e.stopPropagation(); // Detener propagación
-          
-          if (!confirm(`¿Quieres generar un post completo y diseñar su infografía para esta noticia usando Gemini?`)) {
-            return;
-          }
-
-          // Mostrar loading overlay
-          showLoadingOverlay("Generando post e infografía premium con la Inteligencia de Gemini...");
-
-          try {
-            const response = await fetch(`${API_BASE}/api/proposals/generate`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                title: item.title,
-                snippet: item.snippet,
-                sourceName: item.sourceName,
-                model: getSelectedAIModel() // Envía el modelo dinámico a la API
-              })
-            });
-
-            const resData = await response.json();
-            
-            if (resData.success) {
-              const proposal = resData.proposal;
-              
-              // Rellenar post
-              postTextarea.value = proposal.postText;
-              charCount.textContent = postTextarea.value.length;
-              
-              // Rellenar la infografía
-              fillInfographic(proposal.infographicData);
-              clearAiImage();
-              if (currentVisual.apto && aiPrompt.value) {
-                setStatus(`Estilo elegido por la IA: ${currentVisual.estilo || 'ilustrado'}.`);
-                generateImage();
-              } else {
-                setStatus('A la IA esta noticia no le parece apta para una infografía ilustrada: se usa la plantilla. Puedes generar la imagen igualmente.');
-              }
-              
-              hideLoadingOverlay();
-              
-              // Opcional: Generar también la ilustración de IA de alto impacto
-              alert('¡Propuesta generada con éxito con la Inteligencia de Gemini! Ya tienes todo cargado en pantalla.');
-            } else {
-              hideLoadingOverlay();
-              alert('No se pudo generar la propuesta: ' + resData.error);
-            }
-          } catch (err) {
-            console.error('Error en generación de propuesta:', err);
-            hideLoadingOverlay();
-            alert('Error de conexión con el servidor. Inténtalo de nuevo en unos segundos.');
-          }
-        });
-        
-        scrapedNewsList.appendChild(card);
+      const response = await fetch(`${API_BASE}/api/proposals/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: item.title,
+          snippet: item.snippet,
+          sourceName: item.sourceName,
+          model: getSelectedAIModel() // Envía el modelo dinámico a la API
+        })
       });
+      const resData = await response.json();
 
-    } catch (error) {
-      console.error('Error sincronizando noticias:', error);
-      scrapedNewsList.innerHTML = '<p class="section-desc">Ocurrió un error al obtener las noticias del servidor.</p>';
-      newsCountBadge.textContent = 'Error';
+      if (resData.success) {
+        const proposal = resData.proposal;
+        postTextarea.value = proposal.postText;
+        charCount.textContent = postTextarea.value.length;
+
+        fillInfographic(proposal.infographicData);
+        clearAiImage();
+        if (currentVisual.apto && aiPrompt.value) {
+          setStatus(`Estilo elegido por la IA: ${currentVisual.estilo || 'ilustrado'}.`);
+          generateImage();
+        } else {
+          setStatus('A la IA esta noticia no le parece apta para una infografía ilustrada: se usa la plantilla. Puedes generar la imagen igualmente.');
+        }
+
+        hideLoadingOverlay();
+        document.getElementById('linkedin-post-textarea').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        alert('¡Propuesta generada con éxito con la Inteligencia de Gemini! Ya tienes todo cargado en pantalla.');
+      } else {
+        hideLoadingOverlay();
+        alert('No se pudo generar la propuesta: ' + resData.error);
+      }
+    } catch (err) {
+      console.error('Error en generación de propuesta:', err);
+      hideLoadingOverlay();
+      alert('Error de conexión con el servidor. Inténtalo de nuevo en unos segundos.');
     }
   }
-
-  btnSyncNews.addEventListener('click', syncAndLoadNews);
-  if (btnRefreshNewsCard) {
-    btnRefreshNewsCard.addEventListener('click', syncAndLoadNews);
-  }
+  document.addEventListener('pl:generate', (e) => generateFromItem(e.detail));
 
   // Guardar propuesta actual
   btnSaveProposal.addEventListener('click', async () => {
@@ -697,7 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Arranca solo cuando hay sesión iniciada (auth.js)
   window.onAuthReady(() => {
     loadLatestProposal();
-    syncAndLoadNews();
   });
 
   // Actualizar la etiqueta de fecha del header
