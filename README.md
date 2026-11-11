@@ -8,10 +8,11 @@ Este proyecto automatiza la recopilación de prensa económica española de prim
 
 1.  **Scraping y Consolidación de Prensa Matutina:**
     Escanea en tiempo real los principales diarios económicos de España: *Expansión*, *El Economista*, *Cinco Días*, *El País Economía* y *El Mundo Economía*.
+    Las noticias salen **ordenadas por impacto en las últimas 24 horas**: cuántos diarios distintos cubren el mismo tema (🔥 *N diarios*), la frescura y la presencia de temas clave (IPC, tipos, aranceles, deuda…). Las de más de 24 horas van después, por fecha.
 2.  **Redacción con Tono Profesional de Economista:**
     Crea posts estructurados con ganchos comerciales, viñetas analíticas claras, emoticonos, hashtags discretos e hipervínculos requeridos.
 3.  **Lienzo de Infografía de Alta Resolución (1080 x 1350 px):**
-    Diseño visual ultra-nítido con gradientes de color inteligentes:
+    Diseño de **alto impacto visual**: titular enorme en un bloque de color, cifra gigante, tres datos clave, gráfico de barras comparativo, tres claves, impacto en mercados y una conclusión destacada. La IA rellena todos los campos y el texto se ajusta solo para que quepa. Los colores cambian según la noticia:
     *   🟢 **Verde Esmeralda** para noticias positivas.
     *   🔴 **Rojo Coral/Rubí** para noticias negativas.
 4.  **Generación Dinámica sin Pixelación por IA:**

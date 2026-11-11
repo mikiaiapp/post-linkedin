@@ -77,6 +77,140 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // --- Infografía: relleno y lectura de todos los campos ---
+  const $ig = (id) => document.getElementById(id);
+
+  // Reduce el tamaño de la cifra principal hasta que quepa en su columna
+  function fitMetric() {
+    const el = $ig('canvas-metric-value');
+    if (!el) return;
+    let size = 150;
+    el.style.fontSize = size + 'px';
+    const maxW = el.parentElement.clientWidth;
+    while (el.scrollWidth > maxW && size > 56) {
+      size -= 4;
+      el.style.fontSize = size + 'px';
+    }
+  }
+
+  // Titular: el mayor tamaño (hasta 70 px) con el que ocupa como mucho 3 líneas y todo el lienzo cabe en 1350 px
+  function fitHeadline() {
+    const el = $ig('canvas-title-text');
+    if (!el) return;
+    let size = 70;
+    el.style.fontSize = size + 'px';
+    while ((el.offsetHeight > Math.ceil(size * 1.03 * 3) + 2 || canvas.scrollHeight > 1350) && size > 40) {
+      size -= 2;
+      el.style.fontSize = size + 'px';
+    }
+  }
+
+  function renderBars(bars) {
+    const box = $ig('canvas-bars');
+    if (!box) return;
+    box.innerHTML = '';
+    (Array.isArray(bars) ? bars : []).slice(0, 5).forEach((b) => {
+      const pct = Math.max(4, Math.min(100, Number(b.pct) || 50));
+      const row = document.createElement('div');
+      row.className = 'ig-bar-row';
+      row.innerHTML = '<span class="ig-bar-label" contenteditable="true" spellcheck="false"></span>' +
+        '<div class="ig-bar-track" title="Clic para cambiar la longitud de la barra"><div class="ig-bar-fill"></div></div>' +
+        '<span class="ig-bar-value" contenteditable="true" spellcheck="false"></span>';
+      row.querySelector('.ig-bar-label').textContent = b.label || '';
+      row.querySelector('.ig-bar-value').textContent = b.value || '';
+      const fill = row.querySelector('.ig-bar-fill');
+      fill.style.width = pct + '%';
+      fill.dataset.pct = String(pct);
+      row.querySelector('.ig-bar-track').addEventListener('click', () => {
+        const nuevo = prompt('Longitud de la barra (4 a 100):', fill.dataset.pct);
+        const n = Math.max(4, Math.min(100, Number(nuevo)));
+        if (nuevo !== null && !Number.isNaN(n)) { fill.style.width = n + '%'; fill.dataset.pct = String(n); }
+      });
+      box.appendChild(row);
+    });
+    box.parentElement.style.display = box.children.length ? '' : 'none';   // propuestas antiguas sin barras
+  }
+
+  function readBars() {
+    return Array.from(document.querySelectorAll('#canvas-bars .ig-bar-row')).map((row) => ({
+      label: row.querySelector('.ig-bar-label').textContent.trim(),
+      value: row.querySelector('.ig-bar-value').textContent.trim(),
+      pct: Number(row.querySelector('.ig-bar-fill').dataset.pct) || 50
+    }));
+  }
+
+  function fillInfographic(info) {
+    const isPositive = info.sentiment !== undefined ? info.sentiment : true;
+    if (inputSentiment) inputSentiment.value = isPositive ? 'positive' : 'negative';
+
+    canvasTitle.textContent = info.headline || '...';
+    canvasTag.textContent = info.category || '...';
+    $ig('canvas-icon').textContent = info.icon || '📊';
+    canvasMetric.textContent = info.metric || '...';
+    canvasMetricSub.textContent = info.metricSub || '...';
+    canvasCtxText.textContent = info.ctxText || '...';
+
+    const stats = Array.isArray(info.stats) ? info.stats : [];
+    [1, 2, 3].forEach((n) => {
+      const st = stats[n - 1] || {};
+      $ig(`canvas-stat-${n}-value`).textContent = st.value || '—';
+      $ig(`canvas-stat-${n}-label`).textContent = st.label || '';
+    });
+
+    $ig('canvas-bars-title').textContent = info.barsTitle || 'EN PERSPECTIVA';
+    renderBars(info.bars);
+
+    canvasBullet1.innerHTML = info.bullet1 || '...';
+    canvasBullet2.innerHTML = info.bullet2 || '...';
+    canvasBullet3.innerHTML = info.bullet3 || '...';
+
+    canvasMkt1Name.textContent = info.mkt1Name || '...';
+    canvasMkt2Name.textContent = info.mkt2Name || '...';
+    canvasMkt3Name.textContent = info.mkt3Name || '...';
+    updateTrendBadgeUI(info.mkt1Trend || 'down', canvasMkt1Badge);
+    updateTrendBadgeUI(info.mkt2Trend || 'up', canvasMkt2Badge);
+    updateTrendBadgeUI(info.mkt3Trend || 'down', canvasMkt3Badge);
+
+    $ig('canvas-takeaway').textContent = info.takeaway || '';
+    canvasFooterSource.textContent = info.sourceText || '...';
+
+    updateSentimentTheme(isPositive);
+    fitMetric();
+    fitHeadline();
+    scaleCanvas();
+  }
+
+  function readInfographic() {
+    const getTrendFromBadge = (badgeEl) => {
+      if (badgeEl.classList.contains('trend-up')) return 'up';
+      if (badgeEl.classList.contains('trend-down')) return 'down';
+      return 'neutral';
+    };
+    return {
+      headline: canvasTitle.textContent,
+      category: canvasTag.textContent,
+      icon: $ig('canvas-icon').textContent.trim(),
+      sentiment: inputSentiment ? (inputSentiment.value === 'positive') : true,
+      metric: canvasMetric.textContent,
+      metricSub: canvasMetricSub.textContent,
+      ctxText: canvasCtxText.textContent,
+      stats: [1, 2, 3].map((n) => ({ value: $ig(`canvas-stat-${n}-value`).textContent.trim(), label: $ig(`canvas-stat-${n}-label`).textContent.trim() })),
+      barsTitle: $ig('canvas-bars-title').textContent.trim(),
+      bars: readBars(),
+      bullet1: canvasBullet1.innerHTML,
+      bullet2: canvasBullet2.innerHTML,
+      bullet3: canvasBullet3.innerHTML,
+      mkt1Name: canvasMkt1Name.textContent,
+      mkt1Trend: getTrendFromBadge(canvasMkt1Badge),
+      mkt2Name: canvasMkt2Name.textContent,
+      mkt2Trend: getTrendFromBadge(canvasMkt2Badge),
+      mkt3Name: canvasMkt3Name.textContent,
+      mkt3Trend: getTrendFromBadge(canvasMkt3Badge),
+      takeaway: $ig('canvas-takeaway').textContent.trim(),
+      sourceText: canvasFooterSource.textContent
+    };
+  }
+
   // Función para actualizar los badges de mercado en base a su tendencia
   function updateTrendBadgeUI(value, badgeEl) {
     badgeEl.className = 'market-badge'; // Reset
@@ -276,7 +410,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const news = await response.json();
       
       scrapedNewsList.innerHTML = '';
-      newsCountBadge.textContent = `${news.length} noticias`;
+      const recientes = news.filter(n => n.impacto && n.impacto.reciente).length;
+      newsCountBadge.textContent = `${news.length} noticias · ${recientes} en 24 h`;
 
       if (news.length === 0) {
         scrapedNewsList.innerHTML = '<p class="section-desc">No se encontraron noticias. Revisa los feeds RSS.</p>';
@@ -289,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.innerHTML = `
           <div class="news-item-header">
             <span class="news-item-source">${item.sourceName}</span>
+            ${item.impacto && item.impacto.reciente ? `<span class="news-item-impact" title="Ordenadas por impacto en las últimas 24 horas">${item.impacto.diarios > 1 ? `🔥 ${item.impacto.diarios} diarios` : '🕒 24 h'}</span>` : ''}
             <span class="news-item-date">${item.pubDate ? new Date(item.pubDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Hoy'}</span>
           </div>
           <h3 class="news-item-title">${item.title}</h3>
@@ -345,34 +481,8 @@ document.addEventListener('DOMContentLoaded', () => {
               postTextarea.value = proposal.postText;
               charCount.textContent = postTextarea.value.length;
               
-              // Rellenar elementos directamente en el canvas
-              const info = proposal.infographicData;
-              const isPositive = info.sentiment !== undefined ? info.sentiment : true;
-              if (inputSentiment) {
-                inputSentiment.value = isPositive ? 'positive' : 'negative';
-              }
-              
-              canvasTitle.textContent = info.headline || '...';
-              canvasTag.textContent = info.category || '...';
-              canvasMetric.textContent = info.metric || '...';
-              canvasMetricSub.textContent = info.metricSub || '...';
-              canvasCtxText.textContent = info.ctxText || '...';
-              canvasBullet1.innerHTML = info.bullet1 || '...';
-              canvasBullet2.innerHTML = info.bullet2 || '...';
-              canvasBullet3.innerHTML = info.bullet3 || '...';
-              
-              canvasMkt1Name.textContent = info.mkt1Name || '...';
-              canvasMkt2Name.textContent = info.mkt2Name || '...';
-              canvasMkt3Name.textContent = info.mkt3Name || '...';
-              
-              canvasFooterSource.textContent = info.sourceText || '...';
-              
-              updateTrendBadgeUI(info.mkt1Trend || 'down', canvasMkt1Badge);
-              updateTrendBadgeUI(info.mkt2Trend || 'up', canvasMkt2Badge);
-              updateTrendBadgeUI(info.mkt3Trend || 'down', canvasMkt3Badge);
-              
-              updateSentimentTheme(isPositive);
-              scaleCanvas();
+              // Rellenar la infografía
+              fillInfographic(proposal.infographicData);
               
               hideLoadingOverlay();
               
@@ -418,24 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const proposal = {
       date: dateStr,
       postText: postTextarea.value,
-      infographicData: {
-        headline: canvasTitle.textContent,
-        category: canvasTag.textContent,
-        sentiment: inputSentiment ? (inputSentiment.value === 'positive') : true,
-        metric: canvasMetric.textContent,
-        metricSub: canvasMetricSub.textContent,
-        ctxText: canvasCtxText.textContent,
-        bullet1: canvasBullet1.innerHTML,
-        bullet2: canvasBullet2.innerHTML,
-        bullet3: canvasBullet3.innerHTML,
-        mkt1Name: canvasMkt1Name.textContent,
-        mkt1Trend: getTrendFromBadge(canvasMkt1Badge),
-        mkt2Name: canvasMkt2Name.textContent,
-        mkt2Trend: getTrendFromBadge(canvasMkt2Badge),
-        mkt3Name: canvasMkt3Name.textContent,
-        mkt3Trend: getTrendFromBadge(canvasMkt3Badge),
-        sourceText: canvasFooterSource.textContent
-      }
+      infographicData: readInfographic()
     };
 
     try {
@@ -467,34 +560,8 @@ document.addEventListener('DOMContentLoaded', () => {
         postTextarea.value = data.postText;
         charCount.textContent = postTextarea.value.length;
         
-        // Rellenar elementos directamente en el canvas
-        const info = data.infographicData;
-        const isPositive = info.sentiment !== undefined ? info.sentiment : true;
-        if (inputSentiment) {
-          inputSentiment.value = isPositive ? 'positive' : 'negative';
-        }
-        
-        canvasTitle.textContent = info.headline || '...';
-        canvasTag.textContent = info.category || '...';
-        canvasMetric.textContent = info.metric || '...';
-        canvasMetricSub.textContent = info.metricSub || '...';
-        canvasCtxText.textContent = info.ctxText || '...';
-        canvasBullet1.innerHTML = info.bullet1 || '...';
-        canvasBullet2.innerHTML = info.bullet2 || '...';
-        canvasBullet3.innerHTML = info.bullet3 || '...';
-        
-        canvasMkt1Name.textContent = info.mkt1Name || '...';
-        canvasMkt2Name.textContent = info.mkt2Name || '...';
-        canvasMkt3Name.textContent = info.mkt3Name || '...';
-        
-        canvasFooterSource.textContent = info.sourceText || '...';
-        
-        updateTrendBadgeUI(info.mkt1Trend || 'down', canvasMkt1Badge);
-        updateTrendBadgeUI(info.mkt2Trend || 'up', canvasMkt2Badge);
-        updateTrendBadgeUI(info.mkt3Trend || 'down', canvasMkt3Badge);
-        
-        updateSentimentTheme(isPositive);
-        scaleCanvas();
+        // Rellenar la infografía
+        fillInfographic(data.infographicData);
       }
     } catch (error) {
       console.warn('No hay propuesta diaria previa o servidor apagado.');
@@ -502,6 +569,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- 6. Inicialización ---
+  // Contenido de ejemplo hasta que haya una propuesta, y ajuste de la cifra principal al editarla o al cargar las fuentes
+  renderBars([
+    { label: 'EE. UU.', value: '124%', pct: 100 },
+    { label: 'Japón', value: '230%', pct: 85 },
+    { label: 'Zona euro', value: '90%', pct: 60 },
+    { label: 'China', value: '84%', pct: 52 }
+  ]);
+  canvasMetric.addEventListener('input', fitMetric);
+  canvasTitle.addEventListener('input', fitHeadline);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitHeadline(); fitMetric(); });
+  fitHeadline();
+  fitMetric();
+
   // Arranca solo cuando hay sesión iniciada (auth.js)
   window.onAuthReady(() => {
     loadLatestProposal();

@@ -1,0 +1,76 @@
+/* Infografía de alto impacto (1080x1350). Solo CSS que html2canvas pinta bien: degradados, bordes, sombras y flex; sin background-clip:text ni filtros. */
+.infographic-canvas.ig {
+  padding: 0;
+  background: #0a1020;
+  color: #ffffff;
+  font-family: 'Inter', 'Outfit', system-ui, sans-serif;
+  justify-content: space-between;   /* el espacio sobrante se reparte entre secciones */
+}
+/* Sin animaciones dentro del lienzo: el ajuste automático del texto y html2canvas necesitan valores finales inmediatos */
+.ig, .ig * { transition: none !important; animation: none !important; }
+
+/* Paleta según la noticia: rojo = alerta, verde = crecimiento */
+.ig.sentiment-negative { --ig-a: #ef4444; --ig-a2: #991b1b; --ig-hl: #fde047; }
+.ig.sentiment-positive { --ig-a: #10b981; --ig-a2: #047857; --ig-hl: #fde047; }
+
+/* Las secciones no se comprimen: si no cabe, el JS reduce el titular */
+.ig > * { flex-shrink: 0; }
+
+/* Cabecera */
+.ig-header { background: linear-gradient(135deg, var(--ig-a2) 0%, var(--ig-a) 100%); padding: 30px 56px 28px; border-bottom: 8px solid var(--ig-hl); }
+.ig-kicker-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.ig-kicker { background: #ffffff; color: var(--ig-a2); font-weight: 900; font-size: 24px; letter-spacing: 0.14em; padding: 8px 20px; border-radius: 8px; text-transform: uppercase; }
+.ig-icon { font-size: 62px; line-height: 1; }
+.ig-headline { margin: 0; font-family: 'Outfit', 'Inter', sans-serif; font-weight: 900; font-size: 66px; line-height: 1.03; text-transform: uppercase; letter-spacing: -0.01em; text-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); }
+
+/* Héroe */
+.ig-hero { display: flex; gap: 28px; padding: 22px 56px 0; }
+.ig-hero-main { flex: 1 1 auto; min-width: 0; }
+.ig-metric { font-family: 'Outfit', 'Inter', sans-serif; font-weight: 900; font-size: 140px; line-height: 1; color: var(--ig-hl); letter-spacing: -0.03em; white-space: nowrap; text-shadow: 0 6px 0 rgba(0, 0, 0, 0.35); }
+.ig-metric-sub { display: inline-block; margin-top: 8px; background: var(--ig-a); color: #ffffff; font-weight: 900; font-size: 26px; letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 16px; border-radius: 8px; }
+.ig-ctx { margin: 10px 0 0; font-size: 23px; line-height: 1.35; color: #cbd5e1; }
+.ig-stats { flex: 0 0 300px; display: flex; flex-direction: column; gap: 12px; }
+.ig-stat { background: #ffffff; color: #0a1020; border-radius: 16px; padding: 12px 18px 12px 22px; border-left: 12px solid var(--ig-a); }
+.ig-stat-value { display: block; font-family: 'Outfit', 'Inter', sans-serif; font-weight: 900; font-size: 40px; line-height: 1; }
+.ig-stat-label { display: block; margin-top: 4px; font-weight: 700; font-size: 18px; line-height: 1.15; color: #475569; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* Barras comparativas */
+.ig-bars-block { padding: 18px 56px 0; }
+.ig-section-title { font-family: 'Outfit', 'Inter', sans-serif; font-weight: 900; font-size: 28px; letter-spacing: 0.05em; color: var(--ig-hl); text-transform: uppercase; padding-bottom: 6px; margin-bottom: 10px; border-bottom: 3px solid rgba(255, 255, 255, 0.18); }
+.ig-bars { display: flex; flex-direction: column; gap: 9px; }
+.ig-bar-row { display: flex; align-items: center; gap: 16px; }
+.ig-bar-label { flex: 0 0 250px; font-weight: 800; font-size: 25px; line-height: 1.1; }
+.ig-bar-track { flex: 1 1 auto; height: 40px; background: rgba(255, 255, 255, 0.1); border-radius: 20px; overflow: hidden; cursor: ew-resize; }
+.ig-bar-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--ig-a2), var(--ig-a)); }
+.ig-bar-row:first-child .ig-bar-fill { background: linear-gradient(90deg, var(--ig-a), var(--ig-hl)); }
+.ig-bar-value { flex: 0 0 170px; text-align: right; font-family: 'Outfit', 'Inter', sans-serif; font-weight: 900; font-size: 32px; color: #ffffff; }
+
+/* Claves */
+.ig-claves { display: flex; gap: 16px; padding: 18px 56px 0; }
+.ig-clave { flex: 1 1 0; min-width: 0; background: rgba(255, 255, 255, 0.08); border-top: 6px solid var(--ig-a); border-radius: 14px; padding: 10px 16px 12px; }
+.ig-clave-num { display: inline-block; width: 34px; height: 34px; line-height: 34px; text-align: center; border-radius: 50%; background: var(--ig-a); font-weight: 900; font-size: 19px; margin-bottom: 4px; }
+.ig-clave-text { margin: 0; font-size: 21px; line-height: 1.3; color: #e2e8f0; }
+.ig-clave-text strong { color: #ffffff; font-weight: 900; }
+
+/* Mercados */
+.ig-markets { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 56px 0; background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 10px 16px; overflow: hidden; }
+.ig-markets-title { font-weight: 900; font-size: 18px; letter-spacing: 0.08em; color: var(--ig-hl); }
+.ig-market { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ig-market .market-name { font-weight: 800; font-size: 19px; white-space: nowrap; }
+.ig-market .market-badge { display: inline-flex; align-items: center; gap: 6px; font-weight: 900; font-size: 15px; letter-spacing: 0.03em; padding: 4px 10px; border-radius: 999px; border: none; background: #ffffff; }
+.ig-market .market-badge.trend-up { color: #047857; }
+.ig-market .market-badge.trend-down { color: #b91c1c; }
+.ig-market .market-badge.trend-neutral { color: #475569; }
+.ig-market .trend-icon { font-size: 15px; }
+
+/* Conclusión */
+.ig-takeaway { margin: 12px 56px 0; background: var(--ig-hl); color: #111827; font-family: 'Outfit', 'Inter', sans-serif; font-weight: 900; font-size: 28px; line-height: 1.2; padding: 14px 24px; border-radius: 14px; }
+
+/* Pie */
+.ig-footer { padding: 10px 56px 14px; display: flex; justify-content: space-between; align-items: center; gap: 20px; font-size: 17px; color: #94a3b8; }
+.ig-footer p { margin: 0; }
+.ig-accent { color: #ffffff; font-weight: 800; }
+
+/* Edición directa: resalta lo que se puede tocar (no sale en el PNG) */
+.ig [contenteditable="true"]:hover { outline: 2px dashed rgba(255, 255, 255, 0.45); outline-offset: 3px; }
+.ig-takeaway:empty { display: none; }

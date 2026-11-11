@@ -6,6 +6,7 @@ const Parser = require('rss-parser');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 const auth = require('./auth');
+const { ordenarPorImpacto } = require('./ranking');
 
 const app = express();
 const PORT = process.env.PORT || 3080;
@@ -141,14 +142,8 @@ app.get('/api/news', async (req, res) => {
 
   await Promise.all(scrapePromises);
 
-  // Ordenar por fecha si está disponible (de más reciente a más antiguo)
-  aggregatedNews.sort((a, b) => {
-    const dateA = a.pubDate ? new Date(a.pubDate) : new Date(0);
-    const dateB = b.pubDate ? new Date(b.pubDate) : new Date(0);
-    return dateB - dateA;
-  });
-
-  res.json(aggregatedNews);
+  // Orden por impacto en las últimas 24 h (cobertura entre diarios + frescura + temas clave); el resto, por fecha
+  res.json(ordenarPorImpacto(aggregatedNews));
 });
 
 // 4. Guardar propuesta del día
@@ -232,6 +227,22 @@ app.post('/api/gemini-key/test', async (req, res) => {
   }
 });
 
+// Deja la infografía que devuelve la IA en un formato seguro: textos acotados, 3 datos, hasta 5 barras con longitud 4-100
+function normalizarInfografia(info) {
+  const t = (v, max) => String(v === undefined || v === null ? '' : v).trim().slice(0, max);
+  const d = info && typeof info === 'object' ? info : {};
+  const stats = (Array.isArray(d.stats) ? d.stats : []).slice(0, 3).map((x) => ({ value: t(x && x.value, 10), label: t(x && x.label, 28) }));
+  const bars = (Array.isArray(d.bars) ? d.bars : []).slice(0, 5).map((b) => ({
+    label: t(b && b.label, 18),
+    value: t(b && b.value, 11),
+    pct: Math.max(4, Math.min(100, Number(String(b && b.pct).replace(',', '.')) || 50))
+  }));
+  const icono = Array.from(t(d.icon, 16))[0] || '📊';
+  return { ...d, headline: t(d.headline, 80), category: t(d.category, 28), icon: icono, metric: t(d.metric, 12), metricSub: t(d.metricSub, 36),
+    ctxText: t(d.ctxText, 190), stats, barsTitle: t(d.barsTitle, 44), bars, takeaway: t(d.takeaway, 120),
+    mkt1Name: t(d.mkt1Name, 18), mkt2Name: t(d.mkt2Name, 18), mkt3Name: t(d.mkt3Name, 18) };
+}
+
 // 7. Generar propuesta bajo demanda utilizando la API oficial de Gemini (JSON estructurado)
 app.post('/api/proposals/generate', async (req, res) => {
   const { title, snippet, sourceName, model: requestedModel } = req.body;
@@ -265,26 +276,39 @@ app.post('/api/proposals/generate', async (req, res) => {
       - Descripción: ${snippet}
       - Fuente de origen: ${sourceName}
       
+      La infografía debe tener MÁXIMO IMPACTO VISUAL: una cifra gigante, tres datos clave y un gráfico de barras comparativo (de 3 a 5 barras) que haga ver la magnitud de un vistazo (países, escenarios, antes/después, ranking...). Usa solo cifras que aparezcan en la noticia o que sean datos públicos fiables; si no tienes datos comparables, compara magnitudes de la propia noticia y NO inventes cifras. Respeta los límites de caracteres: los textos largos se recortan.
+
       Debes responder ÚNICAMENTE con un objeto JSON con el siguiente esquema estricto de campos:
       {
         "postText": "Texto completo del post de LinkedIn listo para copiar y pegar...",
         "infographicData": {
-          "headline": "Titular de la infografía en mayúsculas (máximo 65 caracteres)",
-          "category": "Categoría general (ej. MACROECONOMÍA, INFLACIÓN, MERCADOS, REGULACIÓN)",
+          "headline": "Titular en mayúsculas, directo y con gancho (máximo 60 caracteres)",
+          "category": "Categoría en mayúsculas (máx. 24 caracteres; ej. MACROECONOMÍA, INFLACIÓN, MERCADOS, REGULACIÓN)",
+          "icon": "UN solo emoji que represente el tema (ej. 📉 🛢️ 🏦 🛡️ 💶)",
           "sentiment": true (boolean: true si la noticia es positiva o de crecimiento, false si es de alerta o riesgo),
-          "metric": "Una métrica numérica clave muy llamativa con su símbolo, bien grande (ej. '+2,4% PIB', '3,0% IPC', '126.700 M€')",
-          "metricSub": "Breve descripción de qué representa esa métrica (máximo 40 caracteres en mayúsculas)",
-          "ctxText": "Un párrafo de contexto histórico o explicativo de 2 o 3 líneas (máximo 250 caracteres)",
-          "bullet1": "Primer dato o riesgo clave. Comienza con una palabra en negrita (ej: '<strong>Consumo:</strong> Detalle del dato...'). Máximo 100 caracteres.",
-          "bullet2": "Segundo dato o riesgo clave. Comienza con negrita.",
-          "bullet3": "Tercer dato o riesgo clave. Comienza con negrita.",
-          "mkt1Name": "Nombre del mercado 1 (ej. Renta Variable / IBEX 35)",
+          "metric": "LA cifra clave, corta y llamativa, máximo 9 caracteres (ej. '50%', '3,0%', '126.700 M€', '+2,4%')",
+          "metricSub": "Qué representa la cifra, en mayúsculas (máximo 32 caracteres)",
+          "ctxText": "Contexto en 1 o 2 frases (máximo 150 caracteres)",
+          "stats": [
+            { "value": "Dato corto (máx. 8 caracteres, ej. '+2,1 pp', '1945', '-30%')", "label": "Qué es, en minúsculas (máx. 24 caracteres)" },
+            { "value": "...", "label": "..." },
+            { "value": "...", "label": "..." }
+          ],
+          "barsTitle": "Título del gráfico de barras en mayúsculas (máx. 40 caracteres, ej. 'DEUDA SOBRE EL PIB POR PAÍS')",
+          "bars": [
+            { "label": "Nombre corto (máx. 16 caracteres)", "value": "Valor con su unidad (máx. 9 caracteres, ej. '230%', '24 ago', '236 días')", "pct": "número de 10 a 100: longitud de la barra, proporcional al valor (la mayor = 100)" }
+          ],
+          "bullet1": "Primera clave. Empieza con una palabra en negrita (ej: '<strong>Consumo:</strong> detalle...'). Máximo 85 caracteres.",
+          "bullet2": "Segunda clave, también con negrita. Máximo 85 caracteres.",
+          "bullet3": "Tercera clave, también con negrita. Máximo 85 caracteres.",
+          "mkt1Name": "Mercado o sector 1 (máximo 14 caracteres)",
           "mkt1Trend": "up, down, o neutral (según cómo impacte la noticia)",
-          "mkt2Name": "Nombre del mercado 2 (ej. Deuda / Bono 10Y)",
+          "mkt2Name": "Mercado o sector 2 (máximo 14 caracteres)",
           "mkt2Trend": "up, down, o neutral",
-          "mkt3Name": "Nombre del mercado 3 (ej. Euro / Divisas o Petróleo / Brent)",
+          "mkt3Name": "Mercado o sector 3 (máximo 14 caracteres)",
           "mkt3Trend": "up, down, o neutral",
-          "sourceText": "Fuente: ${sourceName} y diarios económicos españoles | Mayo 2026"
+          "takeaway": "Conclusión contundente en una frase (máximo 100 caracteres)",
+          "sourceText": "Fuente: ${sourceName} y diarios económicos españoles | ${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}"
         }
       }
     `;
@@ -292,6 +316,7 @@ app.post('/api/proposals/generate', async (req, res) => {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
     const proposalData = JSON.parse(responseText);
+    proposalData.infographicData = normalizarInfografia(proposalData.infographicData);
 
     // Guardar automáticamente en proposals/latest.json y en el historial diario YYYY-MM-DD.json
     const proposalsDir = path.join(auth.getUserDir(req.user), 'proposals');
