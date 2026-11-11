@@ -1,7 +1,7 @@
 {
   "name": "post-linkedin-economico",
   "version": "1.0.0",
-  "description": "Automatización diaria de posts de economía e infografías para LinkedIn",
+  "description": "Posts de economía e infografías para LinkedIn a partir de la prensa económica (búsqueda manual en tiempo real)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

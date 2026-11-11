@@ -69,26 +69,15 @@ La generación de posts e infografías usa la API de Gemini y **cada usuario gua
 
 ## 📂 Estructura del Proyecto
 
-*   `server.js`: Servidor local en Express con endpoints REST para el scraping de RSS y persistencia de propuestas diarias.
+*   `server.js`: Servidor en Express con los endpoints REST: lectura de prensa por RSS en tiempo real (botón «Actualizar Prensa»), generación con Gemini y propuestas de cada usuario.
+*   `auth.js` y `mailer.js`: usuarios (registro, acceso, 2FA, recuperación, clave de Gemini cifrada) y envío de correo.
 *   `sources.json`: Lista de diarios y feeds RSS de economía (puedes añadir o modificar fuentes aquí).
-*   `scrape_news.js`: Script independiente que puede ejecutar el agente o un cron job para obtener las noticias.
-*   `proposals/`: Carpeta que almacena el historial de propuestas diarias en archivos JSON (`YYYY-MM-DD.json`).
+*   `data/` (volumen, no está en el repositorio): `users.json` y una carpeta por usuario con sus propuestas (`YYYY-MM-DD.json`).
 *   `public/`: Código fuente de la interfaz web.
     *   `index.html`: Maquetación a doble columna (editor + previsualización).
     *   `style.css`: Estilo del panel de control y lienzo de la infografía.
     *   `app.js`: Sincronización en tiempo real y lógica de exportación a PNG.
-
----
-
-## ⏰ Programación Diaria (A las 6:00 AM)
-
-El agente **Antigravity** tiene configurada una tarea programada para ejecutarse todos los días a las **6:00 AM** (hora local de España). 
-El proceso diario automático consiste en:
-1.  Ejecutar el script de escaneo de prensa para recuperar las portadas económicas de la mañana.
-2.  Evaluar qué noticia ha acumulado el mayor impacto mediático o repetición.
-3.  Diseñar la propuesta del post diario y estructurar los puntos clave, el sentimiento y la métrica de la infografía.
-4.  Guardar la propuesta en `proposals/latest.json` y en el archivo con la fecha correspondiente.
-5.  Enviarte un aviso al chat indicando que ya puedes revisar tu propuesta de hoy en el panel de control.
+    *   `auth.js` y `auth.css`: pantallas de acceso, perfil y menú de usuario.
 
 ---
 
