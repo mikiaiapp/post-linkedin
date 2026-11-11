@@ -208,7 +208,7 @@
         <p class="auth-hint">${me.hasGeminiKey ? `Guardada (termina en …${esc(me.geminiKeyLast4 || '')}). Se almacena cifrada en el servidor y solo tú la usas.` : 'Aún no hay ninguna clave guardada. Consíguela en Google AI Studio.'}</p>
         <form id="p-key-form" class="auth-form">
           <input type="password" id="p-key" placeholder="${me.hasGeminiKey ? 'Pega una clave nueva para cambiarla' : 'Pega tu clave API de Gemini'}" autocomplete="off">
-          <div class="auth-row"><button class="btn btn-primary" type="submit">Guardar clave</button>${me.hasGeminiKey ? '<button class="btn btn-secondary" type="button" id="p-key-del">Borrar</button>' : ''}</div>
+          <div class="auth-row"><button class="btn btn-primary" type="submit">Guardar clave</button><button class="btn btn-secondary" type="button" id="p-key-test">Probar</button>${me.hasGeminiKey ? '<button class="btn btn-secondary" type="button" id="p-key-del">Borrar</button>' : ''}</div>
         </form>
 
         <h3>Doble factor (app autenticadora)</h3>
@@ -233,6 +233,17 @@
     $('p-key-form').onsubmit = async (e) => {
       e.preventDefault();
       try { await api('PUT', '/gemini-key', { key: $('p-key').value }); close(); openProfile(); } catch (err) { msg(err.message); }
+    };
+    $('p-key-test').onclick = async () => {
+      const sel = $('info-ai-model');
+      const model = sel && sel.value !== 'custom' ? sel.value : ($('info-ai-model-custom') && $('info-ai-model-custom').value.trim()) || undefined;
+      const btn = $('p-key-test');
+      btn.disabled = true; msg('Probando la clave…', true);
+      try {
+        const r = await api('POST', '/gemini-key/test', { key: $('p-key').value, model });
+        msg(`Clave correcta (modelo ${r.model}).`, true);
+      } catch (err) { msg(err.message); }
+      btn.disabled = false;
     };
     if ($('p-key-del')) $('p-key-del').onclick = async () => { if (confirm('¿Borrar tu clave de Gemini?')) { await api('DELETE', '/gemini-key'); close(); openProfile(); } };
 

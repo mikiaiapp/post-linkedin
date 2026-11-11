@@ -213,6 +213,24 @@ app.get('/api/proposals/:date', (req, res) => {
   }
 });
 
+// 6b. Probar la clave de Gemini (la que se escribe en el momento o, si no, la guardada del usuario)
+app.post('/api/gemini-key/test', async (req, res) => {
+  const typed = String(req.body.key || '').trim();
+  const apiKey = typed || auth.getGeminiKey(req.user);
+  if (!apiKey) {
+    return res.status(400).json({ success: false, error: 'No hay ninguna clave que probar: escribe una o guárdala antes.' });
+  }
+  const model = /^[\w.\-]{1,60}$/.test(req.body.model || '') ? req.body.model : 'gemini-3.5-flash';
+  try {
+    const result = await new GoogleGenerativeAI(apiKey).getGenerativeModel({ model }).generateContent('Responde solo con la palabra OK');
+    result.response.text();
+    res.json({ success: true, model });
+  } catch (error) {
+    const detail = String(error.message || error).split(apiKey).join('***').slice(0, 300);
+    res.status(400).json({ success: false, error: `La clave no ha funcionado con ${model}: ${detail}` });
+  }
+});
+
 // 7. Generar propuesta bajo demanda utilizando la API oficial de Gemini (JSON estructurado)
 app.post('/api/proposals/generate', async (req, res) => {
   const { title, snippet, sourceName, model: requestedModel } = req.body;
