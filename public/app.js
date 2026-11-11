@@ -139,6 +139,96 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
+  // --- Infografía como imagen generada por la IA ---
+  const aiImg = $ig('ai-image');
+  const aiPrompt = $ig('ai-image-prompt');
+  const aiStatus = $ig('ai-image-status');
+  const btnGenImage = $ig('btn-generate-image');
+  const modeImageBtn = $ig('mode-image');
+  const modeTemplateBtn = $ig('mode-template');
+  const imgModelSel = $ig('info-image-model');
+  const imgModelCustom = $ig('info-image-model-custom');
+  let aiImageUrl = null;      // URL local (blob) de la imagen del usuario
+  let aiImageMime = 'image/png';
+  let viewMode = 'template';  // 'image' | 'template'
+  let currentVisual = { apto: false, estilo: '' };
+
+  imgModelSel.addEventListener('change', () => {
+    $ig('custom-image-model-group').style.display = imgModelSel.value === 'custom' ? 'flex' : 'none';
+  });
+  const getImageModel = () => (imgModelSel.value === 'custom' ? (imgModelCustom.value.trim() || undefined) : imgModelSel.value);
+
+  function setStatus(texto, error) {
+    aiStatus.textContent = texto || '';
+    aiStatus.style.color = error ? 'var(--accent)' : '';
+  }
+
+  function setViewMode(m) {
+    viewMode = (m === 'image' && aiImageUrl) ? 'image' : 'template';
+    aiImg.hidden = viewMode !== 'image';
+    modeImageBtn.classList.toggle('active', viewMode === 'image');
+    modeTemplateBtn.classList.toggle('active', viewMode === 'template');
+  }
+  modeImageBtn.addEventListener('click', () => {
+    if (!aiImageUrl) { setStatus('Todavía no hay imagen: pulsa «Generar imagen con IA».', true); return; }
+    setViewMode('image');
+  });
+  modeTemplateBtn.addEventListener('click', () => setViewMode('template'));
+
+  async function loadAiImage() {
+    try {
+      const r = await fetch(`${API_BASE}/api/infographic/image`);
+      if (!r.ok) { aiImageUrl = null; return false; }
+      const blob = await r.blob();
+      if (aiImageUrl) URL.revokeObjectURL(aiImageUrl);
+      aiImageMime = blob.type || 'image/png';
+      aiImageUrl = URL.createObjectURL(blob);
+      aiImg.src = aiImageUrl;
+      return true;
+    } catch { return false; }
+  }
+
+  function clearAiImage() {
+    if (aiImageUrl) URL.revokeObjectURL(aiImageUrl);
+    aiImageUrl = null;
+    aiImg.removeAttribute('src');
+    setViewMode('template');
+  }
+
+  async function generateImage() {
+    btnGenImage.disabled = true;
+    setStatus('Enviando a la IA…');
+    try {
+      const r = await fetch(`${API_BASE}/api/infographic/image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: aiPrompt.value, model: getImageModel(), infographicData: readInfographic() })
+      });
+      const d = await r.json();
+      if (!d.success) { setStatus(d.error || 'No se pudo lanzar la imagen.', true); return; }
+      const inicio = Date.now();
+      while (Date.now() - inicio < 300000) {
+        await new Promise((ok) => setTimeout(ok, 3000));
+        const jr = await fetch(`${API_BASE}/api/infographic/job/${d.id}`);
+        const j = await jr.json();
+        if (j.estado === 'listo') {
+          await loadAiImage();
+          setViewMode('image');
+          setStatus('Imagen lista. Si algún texto sale mal, retoca las instrucciones y vuelve a generarla.');
+          return;
+        }
+        if (j.estado === 'error') { setStatus(j.error || 'La IA no pudo generar la imagen.', true); return; }
+        setStatus(`Generando la imagen con la IA… ${Math.round((Date.now() - inicio) / 1000)} s (puede tardar hasta 90 s)`);
+      }
+      setStatus('La IA tarda demasiado. Inténtalo de nuevo en un momento.', true);
+    } catch (e) {
+      setStatus('Error de conexión al generar la imagen.', true);
+    } finally {
+      btnGenImage.disabled = false;
+    }
+  }
+  btnGenImage.addEventListener('click', generateImage);
+
   function fillInfographic(info) {
     const isPositive = info.sentiment !== undefined ? info.sentiment : true;
     if (inputSentiment) inputSentiment.value = isPositive ? 'positive' : 'negative';
@@ -172,6 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateTrendBadgeUI(info.mkt3Trend || 'down', canvasMkt3Badge);
 
     $ig('canvas-takeaway').textContent = info.takeaway || '';
+    currentVisual = { apto: !!(info.visual && info.visual.apto), estilo: (info.visual && info.visual.estilo) || '' };
+    aiPrompt.value = (info.visual && info.visual.imagePrompt) || '';
     canvasFooterSource.textContent = info.sourceText || '...';
 
     updateSentimentTheme(isPositive);
@@ -207,6 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       mkt3Name: canvasMkt3Name.textContent,
       mkt3Trend: getTrendFromBadge(canvasMkt3Badge),
       takeaway: $ig('canvas-takeaway').textContent.trim(),
+      visual: { apto: currentVisual.apto, estilo: currentVisual.estilo, imagePrompt: aiPrompt.value.trim() },
       sourceText: canvasFooterSource.textContent
     };
   }
@@ -326,6 +419,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- 4. Descargar Infografía como PNG de Alta Calidad (1080x1350) ---
   btnDownloadInfo.addEventListener('click', () => {
+    // Modo imagen de IA: se descarga la imagen tal cual la generó el modelo
+    if (viewMode === 'image' && aiImageUrl) {
+      const ext = aiImageMime.includes('jpeg') ? 'jpg' : aiImageMime.includes('webp') ? 'webp' : 'png';
+      const enlace = document.createElement('a');
+      enlace.href = aiImageUrl;
+      enlace.download = `infografia_ia_${new Date().toISOString().slice(0, 10)}.${ext}`;
+      document.body.appendChild(enlace);
+      enlace.click();
+      document.body.removeChild(enlace);
+      return;
+    }
     // 1. Quitar escalado CSS temporalmente para evitar pixelación
     canvas.style.transform = 'none';
     
@@ -483,6 +587,13 @@ document.addEventListener('DOMContentLoaded', () => {
               
               // Rellenar la infografía
               fillInfographic(proposal.infographicData);
+              clearAiImage();
+              if (currentVisual.apto && aiPrompt.value) {
+                setStatus(`Estilo elegido por la IA: ${currentVisual.estilo || 'ilustrado'}.`);
+                generateImage();
+              } else {
+                setStatus('A la IA esta noticia no le parece apta para una infografía ilustrada: se usa la plantilla. Puedes generar la imagen igualmente.');
+              }
               
               hideLoadingOverlay();
               
@@ -562,6 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Rellenar la infografía
         fillInfographic(data.infographicData);
+        loadAiImage().then((ok) => { if (ok) setViewMode('image'); });
       }
     } catch (error) {
       console.warn('No hay propuesta diaria previa o servidor apagado.');

@@ -15,11 +15,13 @@ Este proyecto automatiza la recopilación de prensa económica española de prim
     Diseño de **alto impacto visual**: titular enorme en un bloque de color, cifra gigante, tres datos clave, gráfico de barras comparativo, tres claves, impacto en mercados y una conclusión destacada. La IA rellena todos los campos y el texto se ajusta solo para que quepa. Los colores cambian según la noticia:
     *   🟢 **Verde Esmeralda** para noticias positivas.
     *   🔴 **Rojo Coral/Rubí** para noticias negativas.
-4.  **Generación Dinámica sin Pixelación por IA:**
+4.  **Infografía ilustrada con IA (Nano Banana):**
+    Para las noticias que se prestan (rankings, mapas, escenarios con cifras, comparativas…), la IA actúa como director de arte, elige un estilo (escenarios, ranking, mapa, KPI con ilustración 3D, retratos, dashboard, tabla con pictogramas, árbol) y el modelo de imagen de Gemini dibuja la infografía completa: ilustraciones, mapas, gráficos y esquemas. Si la noticia no se presta, se usa la plantilla. Las instrucciones para la imagen son editables y se puede regenerar. Se usa la clave de Gemini de cada usuario (los modelos de imagen son de pago: `gemini-3-pro-image-preview` para mejor texto, `gemini-3.1-flash-image-preview` para más rapidez). El texto dentro de una imagen de IA puede tener erratas: revísalo antes de publicar.
+5.  **Plantilla sin pixelación (modo seguro):**
     En lugar de generar imágenes con texto corrupto por IA, renderiza texto vectorizado nítido mediante HTML5/CSS3 y exporta una imagen PNG perfecta utilizando `html2canvas`.
-5.  **Acreditación Automática:**
+6.  **Acreditación Automática:**
     Añade en el pie de página de la infografía y del post la firma solicitada: *"Creado por http://mafede.i234.me con ayuda de Gemini"* con hipervínculos reales.
-6.  **Panel de Control Local Premium:**
+7.  **Panel de Control Local Premium:**
     Una interfaz moderna con estética *glassmorphism* oscura para que puedas editar en vivo la infografía o el post antes de descargarlos.
 
 ---

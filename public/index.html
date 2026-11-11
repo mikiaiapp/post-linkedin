@@ -96,6 +96,35 @@
 
 
 
+      <!-- Card: Infografía como imagen generada por la IA -->
+      <div class="glass-card">
+        <div class="card-header">
+          <span class="card-icon">🎨</span>
+          <h2>Infografía con imagen de IA</h2>
+        </div>
+        <div class="card-body form-grid">
+          <p class="section-desc span-all" id="ai-image-note">Al generar un post, la IA propone una infografía ilustrada (mapas, gráficos, dibujos) si la noticia se presta; si no, usa la plantilla.</p>
+          <div class="form-group">
+            <label for="info-image-model">Modelo de imagen</label>
+            <select id="info-image-model">
+              <option value="gemini-3-pro-image-preview" selected>Nano Banana Pro (mejor texto, más lento)</option>
+              <option value="gemini-3.1-flash-image-preview">Nano Banana 2 (más rápido y barato)</option>
+              <option value="custom">Otro (escribir identificador...)</option>
+            </select>
+          </div>
+          <div class="form-group" id="custom-image-model-group" style="display: none;">
+            <label for="info-image-model-custom">Identificador del modelo de imagen</label>
+            <input type="text" id="info-image-model-custom" placeholder="Ej. gemini-3-pro-image-preview">
+          </div>
+          <div class="form-group span-all">
+            <label for="ai-image-prompt">Instrucciones para la imagen (editables)</label>
+            <textarea id="ai-image-prompt" rows="7" placeholder="Aquí aparecen las instrucciones que la IA propone para dibujar la infografía. Puedes retocarlas y volver a generar."></textarea>
+          </div>
+          <button class="btn btn-primary span-all" id="btn-generate-image">🎨 Generar imagen con IA</button>
+          <p class="section-desc span-all" id="ai-image-status"></p>
+        </div>
+      </div>
+
       <!-- Card: Noticias del Día (Scraping) -->
       <div class="glass-card">
         <div class="card-header">
@@ -123,7 +152,11 @@
       <div class="preview-sticky-wrapper">
         <div class="preview-header">
           <span class="card-icon">🖼️</span>
-          <h2>Previsualización de la Infografía Premium</h2>
+          <h2>Vista previa</h2>
+          <div class="mode-switch" id="mode-switch">
+            <button type="button" class="btn btn-secondary mode-btn" id="mode-image" title="Infografía ilustrada generada por la IA">🎨 Imagen IA</button>
+            <button type="button" class="btn btn-secondary mode-btn active" id="mode-template" title="Plantilla de texto y barras">🧩 Plantilla</button>
+          </div>
           <button class="btn btn-accent" id="btn-download-infographic">
             <span class="btn-icon">📥</span> Descargar PNG
           </button>
@@ -131,6 +164,7 @@
 
         <!-- LIENZO DE LA INFOGRAFÍA CON DIMENSIONES FIJAS 1080x1350 (escala visual en CSS) -->
         <div class="canvas-viewport">
+          <img id="ai-image" class="ai-image" alt="Infografía generada por la IA" hidden>
           <div class="infographic-canvas ig sentiment-negative" id="infographic-canvas-element">
 
             <!-- CABECERA: bloque de color con titular enorme -->

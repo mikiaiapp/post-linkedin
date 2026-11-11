@@ -1,5 +1,6 @@
 /* Infografía de alto impacto (1080x1350). Solo CSS que html2canvas pinta bien: degradados, bordes, sombras y flex; sin background-clip:text ni filtros. */
 .infographic-canvas.ig {
+  position: absolute; top: 0; left: 0;   /* fuera del flujo: el visor se escala a la columna (style.css la dejaba en relative y ensanchaba la página) */
   padding: 0;
   background: #0a1020;
   color: #ffffff;
@@ -74,3 +75,13 @@
 /* Edición directa: resalta lo que se puede tocar (no sale en el PNG) */
 .ig [contenteditable="true"]:hover { outline: 2px dashed rgba(255, 255, 255, 0.45); outline-offset: 3px; }
 .ig-takeaway:empty { display: none; }
+
+/* Modo imagen de IA */
+.mode-switch { display: flex; gap: 0.35rem; }
+.mode-btn { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+.mode-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.canvas-viewport .ai-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #02040a; z-index: 5; }
+.canvas-viewport .ai-image[hidden] { display: none; }
+#ai-image-prompt, #ai-image-status { width: 100%; }
+#ai-image-prompt { box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-main); padding: 0.6rem 0.8rem; font: inherit; font-size: 0.85rem; resize: vertical; }
+.span-all { grid-column: 1 / -1; }
