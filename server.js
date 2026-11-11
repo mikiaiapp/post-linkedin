@@ -217,6 +217,7 @@ app.get('/api/proposals/:date', (req, res) => {
 app.post('/api/gemini-key/test', async (req, res) => {
   const typed = String(req.body.key || '').trim();
   const apiKey = typed || auth.getGeminiKey(req.user);
+  const which = typed ? 'escrita' : 'guardada';
   if (!apiKey) {
     return res.status(400).json({ success: false, error: 'No hay ninguna clave que probar: escribe una o guárdala antes.' });
   }
@@ -224,10 +225,10 @@ app.post('/api/gemini-key/test', async (req, res) => {
   try {
     const result = await new GoogleGenerativeAI(apiKey).getGenerativeModel({ model }).generateContent('Responde solo con la palabra OK');
     result.response.text();
-    res.json({ success: true, model });
+    res.json({ success: true, model, which });
   } catch (error) {
     const detail = String(error.message || error).split(apiKey).join('***').slice(0, 300);
-    res.status(400).json({ success: false, error: `La clave no ha funcionado con ${model}: ${detail}` });
+    res.status(400).json({ success: false, error: `La clave ${which} no ha funcionado con ${model}: ${detail}` });
   }
 });
 

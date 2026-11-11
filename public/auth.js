@@ -205,7 +205,7 @@
         <p class="auth-hint">${esc(me.username)}</p>
 
         <h3>Clave de Gemini</h3>
-        <p class="auth-hint">${me.hasGeminiKey ? `Guardada (termina en …${esc(me.geminiKeyLast4 || '')}). Se almacena cifrada en el servidor y solo tú la usas.` : 'Aún no hay ninguna clave guardada. Consíguela en Google AI Studio.'}</p>
+        <p class="auth-hint">${me.hasGeminiKey ? `Guardada (termina en …${esc(me.geminiKeyLast4 || '')}). Se almacena cifrada en el servidor y solo tú la usas.` : 'Aún no hay ninguna clave guardada.'} <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Obtener clave gratis ↗</a></p>
         <form id="p-key-form" class="auth-form">
           <input type="password" id="p-key" placeholder="${me.hasGeminiKey ? 'Pega una clave nueva para cambiarla' : 'Pega tu clave API de Gemini'}" autocomplete="off">
           <div class="auth-row"><button class="btn btn-primary" type="submit">Guardar clave</button><button class="btn btn-secondary" type="button" id="p-key-test">Probar</button>${me.hasGeminiKey ? '<button class="btn btn-secondary" type="button" id="p-key-del">Borrar</button>' : ''}</div>
@@ -238,10 +238,10 @@
       const sel = $('info-ai-model');
       const model = sel && sel.value !== 'custom' ? sel.value : ($('info-ai-model-custom') && $('info-ai-model-custom').value.trim()) || undefined;
       const btn = $('p-key-test');
-      btn.disabled = true; msg('Probando la clave…', true);
+      btn.disabled = true; msg($('p-key').value.trim() ? 'Probando la clave escrita…' : 'Probando la clave guardada…', true);
       try {
         const r = await api('POST', '/gemini-key/test', { key: $('p-key').value, model });
-        msg(`Clave correcta (modelo ${r.model}).`, true);
+        msg(`La clave ${r.which} funciona (modelo ${r.model}).`, true);
       } catch (err) { msg(err.message); }
       btn.disabled = false;
     };
