@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <!-- CSS Principal -->
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="auth.css">
   <!-- html2canvas para exportar la infografía a imagen sin pérdidas de calidad -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -26,6 +27,7 @@
     </div>
     <div class="header-actions">
       <span class="date-badge" id="current-date-badge">Cargando fecha...</span>
+      <span id="user-slot"></span>
       <button class="btn btn-secondary" id="btn-sync-news" title="Scrapear prensa hoy">
         <span class="btn-icon">🔄</span> Actualizar Prensa
       </button>
@@ -294,6 +296,7 @@
     <p>PostLinkedIn Dashboard &copy; 2026. Diseñado para <a href="http://mafede.i234.me" target="_blank">mafede.i234.me</a> con tecnología Gemini.</p>
   </footer>
 
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 <!-- Deslizar hacia abajo para actualizar (plantilla común de las apps) -->
 <script>

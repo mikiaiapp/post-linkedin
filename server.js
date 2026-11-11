@@ -5,6 +5,7 @@ const path = require('path');
 const Parser = require('rss-parser');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
+const auth = require('./auth');
 
 const app = express();
 const PORT = process.env.PORT || 3080;
@@ -20,14 +21,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Usuarios: registro, acceso, 2FA, recuperación y clave de Gemini. Todo lo que cuelga de /api exige sesión
+// salvo las rutas públicas de acceso definidas en auth.js.
+app.use('/api', auth.router);
+
 // Rutas de archivos
 const SOURCES_FILE = path.join(__dirname, 'sources.json');
-const PROPOSALS_DIR = path.join(__dirname, 'proposals');
-
-// Asegurar que exista la carpeta de propuestas
-if (!fs.existsSync(PROPOSALS_DIR)) {
-  fs.mkdirSync(PROPOSALS_DIR);
-}
 
 const DEFAULT_SOURCES = [
   {
@@ -162,8 +161,9 @@ app.post('/api/proposals', (req, res) => {
 
   // Sanitizar fecha para evitar directory traversal (formato esperado YYYY-MM-DD)
   const safeDate = date.replace(/[^0-9-]/g, '');
-  const filePath = path.join(PROPOSALS_DIR, `${safeDate}.json`);
-  const latestPath = path.join(PROPOSALS_DIR, 'latest.json');
+  const proposalsDir = path.join(auth.getUserDir(req.user), 'proposals');
+  const filePath = path.join(proposalsDir, `${safeDate}.json`);
+  const latestPath = path.join(proposalsDir, 'latest.json');
 
   const proposalObj = {
     date: safeDate,
@@ -184,7 +184,7 @@ app.post('/api/proposals', (req, res) => {
 
 // 5. Obtener última propuesta guardada
 app.get('/api/proposals/latest', (req, res) => {
-  const latestPath = path.join(PROPOSALS_DIR, 'latest.json');
+  const latestPath = path.join(auth.getUserDir(req.user), 'proposals', 'latest.json');
   try {
     if (fs.existsSync(latestPath)) {
       const data = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
@@ -200,7 +200,7 @@ app.get('/api/proposals/latest', (req, res) => {
 // 6. Obtener propuesta de una fecha concreta
 app.get('/api/proposals/:date', (req, res) => {
   const safeDate = req.params.date.replace(/[^0-9-]/g, '');
-  const filePath = path.join(PROPOSALS_DIR, `${safeDate}.json`);
+  const filePath = path.join(auth.getUserDir(req.user), 'proposals', `${safeDate}.json`);
   try {
     if (fs.existsSync(filePath)) {
       const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
@@ -215,20 +215,21 @@ app.get('/api/proposals/:date', (req, res) => {
 
 // 7. Generar propuesta bajo demanda utilizando la API oficial de Gemini (JSON estructurado)
 app.post('/api/proposals/generate', async (req, res) => {
-  const { title, snippet, sourceName } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
+  const { title, snippet, sourceName, model: requestedModel } = req.body;
+  // Cada usuario usa su propia clave de Gemini, guardada cifrada en su cuenta
+  const apiKey = auth.getGeminiKey(req.user);
 
   if (!apiKey) {
     return res.status(400).json({
       success: false,
-      error: 'Clave API de Gemini ausente. Por favor, añade tu clave API de Gemini en la variable GEMINI_API_KEY dentro de tu panel de Portainer (como variable de entorno) o en un archivo .env.'
+      error: 'Falta tu clave API de Gemini. Añádela en tu perfil (menú de usuario → Mi perfil).'
     });
   }
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: /^[\w.\-]{1,60}$/.test(requestedModel || '') ? requestedModel : 'gemini-3.5-flash',
       generationConfig: {
         responseMimeType: 'application/json'
       }
@@ -274,11 +275,12 @@ app.post('/api/proposals/generate', async (req, res) => {
     const proposalData = JSON.parse(responseText);
 
     // Guardar automáticamente en proposals/latest.json y en el historial diario YYYY-MM-DD.json
+    const proposalsDir = path.join(auth.getUserDir(req.user), 'proposals');
     const dateStr = new Date().toISOString().slice(0, 10);
     const safeDate = dateStr.replace(/[^0-9-]/g, '');
     
-    const filePath = path.join(PROPOSALS_DIR, `${safeDate}.json`);
-    const latestPath = path.join(PROPOSALS_DIR, 'latest.json');
+    const filePath = path.join(proposalsDir, `${safeDate}.json`);
+    const latestPath = path.join(proposalsDir, 'latest.json');
 
     const proposalObj = {
       date: safeDate,

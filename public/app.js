@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch (err) {
             console.error('Error en generación de propuesta:', err);
             hideLoadingOverlay();
-            alert('Error de conexión con el servidor. Asegúrate de tener configurada la variable de entorno GEMINI_API_KEY en tu Synology NAS o en el archivo .env de la aplicación.');
+            alert('Error de conexión con el servidor. Inténtalo de nuevo en unos segundos.');
           }
         });
         
@@ -502,11 +502,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- 6. Inicialización ---
-  loadLatestProposal();
-  syncAndLoadNews();
+  // Arranca solo cuando hay sesión iniciada (auth.js)
+  window.onAuthReady(() => {
+    loadLatestProposal();
+    syncAndLoadNews();
+  });
 
   // Actualizar la etiqueta de fecha del header
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   document.getElementById('current-date-badge').textContent = new Date().toLocaleDateString('es-ES', options);
 
 });
+

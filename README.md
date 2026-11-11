@@ -43,6 +43,30 @@ Este proyecto automatiza la recopilación de prensa económica española de prim
 
 ---
 
+### Usuarios
+
+La app tiene su propio sistema de usuarios (el mismo estándar que ContaMiki): registro con verificación del correo (enlace con token), inicio de sesión (JWT de 30 días), doble factor opcional con app autenticadora (TOTP), recuperación de contraseña por correo y cambio de contraseña. Todo lo que cuelga de `/api` exige sesión. Los datos viven en `DATA_DIR` (`users.json` y una carpeta por usuario con sus propuestas).
+
+### Clave de Gemini
+
+La generación de posts e infografías usa la API de Gemini y **cada usuario guarda su propia clave**: menú de usuario → **Mi perfil** → *Clave de Gemini* (se obtiene en Google AI Studio). Se almacena **cifrada** (AES-256-GCM, con una clave derivada de `JWT_SECRET`) en la cuenta del usuario y nunca se devuelve completa. Si cambias `JWT_SECRET`, las sesiones se cierran y cada usuario tendrá que volver a introducir su clave. No hace falta ninguna variable `GEMINI_API_KEY` en el servidor.
+
+### Configuración (variables de entorno)
+
+| Variable | Descripción |
+|---|---|
+| `JWT_SECRET` | **Obligatoria**, sin valor por defecto: firma las sesiones y cifra las claves de Gemini. Si falta, la app no arranca. Usa una cadena larga y aleatoria. |
+| `APP_URL` | Dirección pública de la app (p. ej. `https://postlinkedin.midominio.com`); se usa en los enlaces de los correos. |
+| `DATA_DIR` | Carpeta de datos (por defecto `./data`; en Docker, `/usr/src/app/data`, montada como volumen). |
+
+**Correo** (verificación de cuenta y recuperación de contraseña): configura una de estas dos formas. Si defines las dos, se usa el servicio central.
+
+- **Servicio de correo central:** `CENTRAL_EMAIL_URL` y `CENTRAL_EMAIL_KEY` (la app hace `POST <URL>/send` con `to`, `subject`, `text`, `html`, `key` y `fromName`).
+- **SMTP directo:** `SMTP_HOST` (imprescindible), `SMTP_PORT` (587 por defecto; 465 usa TLS directo), `SMTP_SECURE` (`true` fuerza TLS directo), `SMTP_USER`, `SMTP_PASS` y `SMTP_FROM` (remitente; por defecto `SMTP_USER`).
+- Sin ninguna de las dos, los correos se escriben en el registro del contenedor (modo de prueba), de donde puedes copiar los enlaces.
+
+---
+
 ## 📂 Estructura del Proyecto
 
 *   `server.js`: Servidor local en Express con endpoints REST para el scraping de RSS y persistencia de propuestas diarias.

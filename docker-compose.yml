@@ -12,5 +12,18 @@ services:
     volumes:
       - /volume1/docker/postlinkedin/proposals:/usr/src/app/proposals
       - /volume1/docker/postlinkedin/sources.json:/usr/src/app/sources.json
+      - /volume1/docker/postlinkedin/data:/usr/src/app/data
     environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # Obligatoria: firma las sesiones y cifra las claves de Gemini de los usuarios (si falta, la app no arranca)
+      - JWT_SECRET=${JWT_SECRET:?Define JWT_SECRET en las variables del stack}
+      # Dirección pública de la app (para los enlaces de los correos)
+      - APP_URL=${APP_URL:-}
+      # Correo: servicio central (Cartero) o SMTP directo; sin ninguno, los correos se escriben en el registro
+      - CENTRAL_EMAIL_URL=${CENTRAL_EMAIL_URL:-}
+      - CENTRAL_EMAIL_KEY=${CENTRAL_EMAIL_KEY:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-}
+      - SMTP_SECURE=${SMTP_SECURE:-}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
