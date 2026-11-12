@@ -47,7 +47,7 @@
       overlay.setAttribute('data-no-ptr', '');
       document.body.appendChild(overlay);
     }
-    overlay.innerHTML = `<div class="auth-card glass-card"><div class="auth-brand">📈 <span>PostLinkedIn</span></div>${html}<p class="auth-msg" id="auth-msg"></p></div>`;
+    overlay.innerHTML = `<div class="auth-card glass-card"><div class="auth-brand"><img src="/icon.png" alt="" width="40" height="40"> <span>PostLinkedIn</span></div>${html}<p class="auth-msg" id="auth-msg"></p></div>`;
     return overlay;
   }
   const msg = (text, ok) => {

@@ -25,6 +25,7 @@
 .auth-card h2 { margin: 0; font-size: 1.25rem; }
 .auth-card h3 { margin: 1rem 0 0; font-size: 1rem; border-top: 1px solid var(--border-light); padding-top: 1rem; }
 .auth-brand { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.4rem; text-align: center; }
+.auth-brand img { width: 40px; height: 40px; border-radius: 9px; vertical-align: middle; margin-right: .35rem; }
 .auth-hint { margin: 0; color: var(--text-muted); font-size: 0.85rem; overflow-wrap: anywhere; }
 .auth-hint.mono { font-family: monospace; font-size: 0.8rem; }
 
