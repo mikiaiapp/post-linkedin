@@ -527,7 +527,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         hideLoadingOverlay();
         document.getElementById('linkedin-post-textarea').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        alert('¡Propuesta generada con éxito con la Inteligencia de Gemini! Ya tienes todo cargado en pantalla.');
+        const aviso = resData.modelo && resData.modeloPedido && resData.modelo !== resData.modeloPedido ? `\n\nAviso: ${resData.modeloPedido} estaba saturado y se ha usado ${resData.modelo}.` : '';
+        alert('¡Propuesta generada con éxito con la Inteligencia de Gemini! Ya tienes todo cargado en pantalla.' + aviso);
       } else {
         hideLoadingOverlay();
         alert('No se pudo generar la propuesta: ' + resData.error);

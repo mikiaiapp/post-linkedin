@@ -290,9 +290,38 @@ app.post('/api/gemini-key/test', async (req, res) => {
     res.json({ success: true, model, which });
   } catch (error) {
     const detail = String(error.message || error).split(apiKey).join('***').slice(0, 300);
+    if (esPasajero(error)) return res.status(503).json({ success: false, error: `Google está saturado ahora mismo con ${model} (no es un problema de tu clave). Inténtalo en un momento o elige otro modelo.` });
     res.status(400).json({ success: false, error: `La clave ${which} no ha funcionado con ${model}: ${detail}` });
   }
 });
+
+// Errores pasajeros de Google (saturación, límite de ritmo, red): se reintenta y, si sigue, se prueba otro modelo
+const esPasajero = (e) => /\b(503|429|500|504)\b|unavailable|overloaded|high demand|resource.?exhausted|fetch failed|timeout|ECONNRESET/i.test(String((e && e.message) || e));
+const MODELOS_ALTERNATIVOS = ['gemini-3.1-flash-lite', 'gemini-2.5-flash'];
+const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Genera con el modelo pedido (2 intentos) y, si Google está saturado, con las alternativas. Devuelve { texto, modelo }
+async function generarConAlternativas(apiKey, modeloPedido, prompt) {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const opciones = process.env.GEMINI_BASE_URL ? { baseUrl: process.env.GEMINI_BASE_URL } : undefined;
+  const modelos = [modeloPedido, ...MODELOS_ALTERNATIVOS.filter((m) => m !== modeloPedido)];
+  let ultimo;
+  for (const m of modelos) {
+    const modelo = genAI.getGenerativeModel({ model: m, generationConfig: { responseMimeType: 'application/json' } }, opciones);
+    for (let intento = 1; intento <= 2; intento++) {
+      try {
+        const r = await modelo.generateContent(prompt);
+        return { texto: r.response.text(), modelo: m };
+      } catch (e) {
+        ultimo = e;
+        if (!esPasajero(e)) throw e;                       // clave inválida, petición mala…: no tiene sentido reintentar
+        console.error(`Gemini ${m} no disponible (intento ${intento}):`, String(e.message).slice(0, 120));
+        if (intento === 1) await pausa(2500);
+      }
+    }
+  }
+  throw ultimo;
+}
 
 // Deja la infografía que devuelve la IA en un formato seguro: textos acotados, 3 datos, hasta 5 barras con longitud 4-100
 function normalizarInfografia(info) {
@@ -329,14 +358,6 @@ app.post('/api/proposals/generate', async (req, res) => {
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: /^[\w.\-]{1,60}$/.test(requestedModel || '') ? requestedModel : 'gemini-3.5-flash',
-      generationConfig: {
-        responseMimeType: 'application/json'
-      }
-    }, process.env.GEMINI_BASE_URL ? { baseUrl: process.env.GEMINI_BASE_URL } : undefined);   // GEMINI_BASE_URL: solo para pruebas
-
     const prompt = `
       Eres un economista profesional, experto en comunicación y redacción corporativa de alto impacto para LinkedIn.
       Tu objetivo es analizar la siguiente noticia económica española y generar:
@@ -402,9 +423,8 @@ app.post('/api/proposals/generate', async (req, res) => {
       }
     `;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    const proposalData = JSON.parse(responseText);
+    const generado = await generarConAlternativas(apiKey, /^[\w.\-]{1,60}$/.test(requestedModel || '') ? requestedModel : 'gemini-3.5-flash', prompt);
+    const proposalData = JSON.parse(generado.texto);
     proposalData.infographicData = normalizarInfografia(proposalData.infographicData);
 
     // Guardar automáticamente en proposals/latest.json y en el historial diario YYYY-MM-DD.json
@@ -426,11 +446,12 @@ app.post('/api/proposals/generate', async (req, res) => {
     fs.writeFileSync(latestPath, JSON.stringify(proposalObj, null, 2), 'utf-8');
     for (const e of ['png', 'jpg', 'webp']) fs.rmSync(path.join(proposalsDir, `latest_image.${e}`), { force: true });   // la imagen anterior ya no corresponde
 
-    res.json({ success: true, proposal: proposalObj });
+    res.json({ success: true, proposal: proposalObj, modelo: generado.modelo, modeloPedido: requestedModel || 'gemini-3.5-flash' });
 
   } catch (error) {
     console.error('Error generando propuesta con Gemini:', error);
     if (/API key not valid|API_KEY_INVALID/i.test(String(error.message))) return res.status(400).json({ success: false, error: 'Google rechaza tu clave de Gemini (no es válida). Pruébala en Mi perfil → Probar y, si falla, escribe una nueva.' });
+    if (esPasajero(error)) return res.status(503).json({ success: false, error: 'Google tiene ahora mucha demanda y ningún modelo ha respondido (he probado con varios). Tu clave está bien: inténtalo de nuevo en uno o dos minutos.' });
     res.status(500).json({ success: false, error: 'Error interno en la generación de la IA: ' + error.message });
   }
 });
