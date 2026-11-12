@@ -35,6 +35,9 @@ async function llamar(url, headers, cuerpo, apiKey) {
   return { res, body };
 }
 
+const SIN_CUOTA = /quota|billing|exceeded your current|free.?tier|RESOURCE_EXHAUSTED.*(limit: 0|billing)/i;
+const MENSAJE_SIN_CUOTA = 'Tu clave de Gemini no tiene cuota para generar imágenes: los modelos de imagen son de pago y no tienen capa gratuita. Activa la facturación del proyecto de esa clave en Google AI Studio (https://aistudio.google.com) y vuelve a intentarlo.';
+
 function errorDe(res, body, apiKey) {
   const msg = (body && body.error && (body.error.message || body.error)) || `HTTP ${res.status}`;
   return new Error(String(msg).split(apiKey).join('***').slice(0, 300));
@@ -71,7 +74,7 @@ async function intentar(apiKey, model, prompt) {
   let r = await llamar(`${BASE}/v1beta/interactions`, { 'Api-Revision': REVISION }, {
     model,
     input: prompt,
-    response_format: { type: 'image', mime_type: 'image/png', aspect_ratio: '4:5', image_size: TAMANO }
+    response_format: { type: 'image', mime_type: 'image/jpeg', aspect_ratio: '4:5', image_size: TAMANO }   // la API solo admite image/jpeg aquí
   }, apiKey);
   let via = 'interactions';
   if (!r.res.ok && [400, 404, 405, 501].includes(r.res.status)) {
@@ -104,6 +107,7 @@ async function generarImagen(apiKey, model, prompt) {
       } catch (e) {
         ultimo = e;
         console.error(`Imagen con ${m} (intento ${intento}):`, String(e.message).slice(0, 300));
+        if (SIN_CUOTA.test(String(e.message))) { const q = new Error(MENSAJE_SIN_CUOTA + ' (Detalle de Google: ' + String(e.message).slice(0, 160) + ')'); q.status = 429; q.sinCuota = true; throw q; }   // no tiene sentido reintentar ni probar otros modelos
         if (e.status && esPasajero(e.status) && intento === 1) { await pausa(3000); continue; }   // saturado: un reintento
         break;                                                                                        // otro error: probar el siguiente modelo
       }
