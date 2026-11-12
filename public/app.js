@@ -208,10 +208,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (j.estado === 'listo') {
           await loadAiImage();
           setViewMode('image');
-          setStatus('Imagen lista. Si algún texto sale mal, retoca las instrucciones y vuelve a generarla.');
+          setStatus(`Imagen lista${j.modelo ? ` (modelo ${j.modelo})` : ''}. Si algún texto sale mal, retoca las instrucciones y vuelve a generarla.`);
           return;
         }
-        if (j.estado === 'error') { setStatus(j.error || 'La IA no pudo generar la imagen.', true); return; }
+        if (j.estado === 'error') { setStatus(j.error || 'La IA no pudo generar la imagen.', true); alert('No se pudo generar la imagen con la IA:\n' + (j.error || 'error desconocido')); return; }
         setStatus(`Generando la imagen con la IA… ${Math.round((Date.now() - inicio) / 1000)} s (puede tardar hasta 90 s)`);
       }
       setStatus('La IA tarda demasiado. Inténtalo de nuevo en un momento.', true);

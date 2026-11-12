@@ -40,42 +40,81 @@ function errorDe(res, body, apiKey) {
   return new Error(String(msg).split(apiKey).join('***').slice(0, 300));
 }
 
-// Busca la imagen en la respuesta de la Interactions API (output_image o bloques «image» de los pasos) o en la de generateContent
-function extraerImagen(body) {
-  if (!body) return null;
-  if (body.output_image && body.output_image.data) return { mime: body.output_image.mime_type || 'image/png', data: body.output_image.data };
-  for (const step of body.steps || []) {
-    for (const b of step.content || []) if (b && b.type === 'image' && b.data) return { mime: b.mime_type || 'image/png', data: b.data };
+// Busca en cualquier parte de la respuesta un bloque con una imagen en base64 (Interactions API: output_image, outputs o pasos «image»;
+// generateContent: inlineData). Búsqueda en profundidad, para no depender de la forma exacta del JSON.
+function buscarImagen(obj, prof = 0) {
+  if (!obj || typeof obj !== 'object' || prof > 9) return null;
+  if (typeof obj.data === 'string' && obj.data.length > 2000 && (obj.type === 'image' || /^image\//.test(obj.mime_type || obj.mimeType || '') || /^(iVBOR|\/9j\/|UklGR)/.test(obj.data))) {
+    return { mime: obj.mime_type || obj.mimeType || (obj.data.startsWith('/9j/') ? 'image/jpeg' : 'image/png'), data: obj.data };
   }
-  const parts = (((body.candidates || [])[0] || {}).content || {}).parts || [];
-  const img = parts.map((p) => p.inlineData || p.inline_data).find((x) => x && x.data);
-  return img ? { mime: img.mimeType || img.mime_type || 'image/png', data: img.data } : null;
+  for (const v of Array.isArray(obj) ? obj : Object.values(obj)) {
+    const r = buscarImagen(v, prof + 1);
+    if (r) return r;
+  }
+  return null;
 }
 
-async function generarImagen(apiKey, model, prompt) {
-  let { res, body } = await llamar(`${BASE}/v1beta/interactions`, { 'Api-Revision': REVISION }, {
+// Resumen de la forma de una respuesta (sin datos), para diagnosticar cuando no trae imagen
+function forma(v, prof = 0) {
+  if (Array.isArray(v)) return `[${v.length ? forma(v[0], prof + 1) : ''}]`;
+  if (v && typeof v === 'object') return prof > 2 ? '{…}' : `{${Object.keys(v).slice(0, 8).map((k) => `${k}:${forma(v[k], prof + 1)}`).join(',')}}`;
+  return typeof v === 'string' ? `str${v.length > 200 ? '(largo)' : ''}` : typeof v;
+}
+
+const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
+const esPasajero = (st) => st === 429 || st === 500 || st === 503 || st === 504;
+// Modelos de imagen por orden de preferencia (solo se recorre la lista si el usuario no eligió uno concreto)
+const MODELOS = ['gemini-nano-banana-2.1', 'gemini-3.1-flash-image', 'gemini-3-pro-image'];
+
+// Un intento con un modelo: primero la Interactions API y, si no la acepta, generateContent
+async function intentar(apiKey, model, prompt) {
+  let r = await llamar(`${BASE}/v1beta/interactions`, { 'Api-Revision': REVISION }, {
     model,
     input: prompt,
     response_format: { type: 'image', mime_type: 'image/png', aspect_ratio: '4:5', image_size: TAMANO }
   }, apiKey);
-
-  if (res.status === 404 || res.status === 405) {
-    ({ res, body } = await llamar(`${BASE}/v1beta/models/${encodeURIComponent(model)}:generateContent`, {}, {
+  let via = 'interactions';
+  if (!r.res.ok && [400, 404, 405, 501].includes(r.res.status)) {
+    const primero = errorDe(r.res, r.body, apiKey).message;
+    const r2 = await llamar(`${BASE}/v1beta/models/${encodeURIComponent(model)}:generateContent`, {}, {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: { responseModalities: ['TEXT', 'IMAGE'], imageConfig: { aspectRatio: '4:5' } }
-    }, apiKey));
+    }, apiKey);
+    if (r2.res.ok) { r = r2; via = 'generateContent'; }
+    else { const e = errorDe(r2.res, r2.body, apiKey); e.status = r2.res.status; e.message = `${primero} | ${e.message}`; throw e; }
   }
-  if (!res.ok) throw errorDe(res, body, apiKey);
-
-  const img = extraerImagen(body);
+  if (!r.res.ok) { const e = errorDe(r.res, r.body, apiKey); e.status = r.res.status; throw e; }
+  const img = buscarImagen(r.body);
   if (!img) {
-    const texto = String(body && body.output_text || '').slice(0, 200);
-    throw new Error(`La IA no devolvió ninguna imagen${texto ? `: ${texto}` : ''}`);
+    const texto = String(r.body && (r.body.output_text || '')).slice(0, 160);
+    const e = new Error(`La IA no devolvió ninguna imagen (${via}; respuesta ${forma(r.body)})${texto ? `: ${texto}` : ''}`);
+    e.sinImagen = true;
+    throw e;
   }
-  return { mime: img.mime, data: Buffer.from(img.data, 'base64') };
+  return { mime: img.mime, data: Buffer.from(img.data, 'base64'), model, via };
+}
+
+async function generarImagen(apiKey, model, prompt) {
+  const lista = MODELOS.includes(model) ? [model, ...MODELOS.filter((m) => m !== model)] : [model];
+  let ultimo;
+  for (const m of lista) {
+    for (let intento = 1; intento <= 2; intento++) {
+      try {
+        return await intentar(apiKey, m, prompt);
+      } catch (e) {
+        ultimo = e;
+        console.error(`Imagen con ${m} (intento ${intento}):`, String(e.message).slice(0, 300));
+        if (e.status && esPasajero(e.status) && intento === 1) { await pausa(3000); continue; }   // saturado: un reintento
+        break;                                                                                        // otro error: probar el siguiente modelo
+      }
+    }
+    if (ultimo && ultimo.status && [401, 403].includes(ultimo.status)) break;                          // clave rechazada: no sirve probar más modelos
+  }
+  ultimo.message = `${ultimo.message}`.slice(0, 380);
+  throw ultimo;
 }
 
 const EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 const extDe = (mime) => EXT[mime] || 'png';
 
-module.exports = { construirPromptImagen, generarImagen, extDe, FIRMA };
+module.exports = { construirPromptImagen, generarImagen, buscarImagen, extDe, FIRMA };

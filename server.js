@@ -484,7 +484,8 @@ app.post('/api/infographic/image', (req, res) => {
   trabajosImagen.set(id, trabajo);
   for (const [k, j] of trabajosImagen) if (Date.now() - j.inicio > 1800000) trabajosImagen.delete(k);   // limpieza a los 30 min
 
-  imagen.generarImagen(apiKey, model, prompt).then(({ mime, data }) => {
+  imagen.generarImagen(apiKey, model, prompt).then(({ mime, data, model: usado, via }) => {
+    trabajo.modelo = usado; trabajo.via = via;
     const dir = carpetaPropuestas(req.user);
     for (const e of ['png', 'jpg', 'webp']) fs.rmSync(path.join(dir, `latest_image.${e}`), { force: true });
     const ext = imagen.extDe(mime);
@@ -502,7 +503,7 @@ app.post('/api/infographic/image', (req, res) => {
 app.get('/api/infographic/job/:id', (req, res) => {
   const j = trabajosImagen.get(req.params.id);
   if (!j || j.userId !== req.user.id) return res.status(404).json({ success: false, error: 'Trabajo no encontrado' });
-  res.json({ success: true, estado: j.estado, error: j.error, segundos: Math.round((Date.now() - j.inicio) / 1000) });
+  res.json({ success: true, estado: j.estado, error: j.error, modelo: j.modelo || null, segundos: Math.round((Date.now() - j.inicio) / 1000) });
 });
 
 app.get('/api/infographic/image', (req, res) => {
