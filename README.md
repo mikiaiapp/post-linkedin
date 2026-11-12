@@ -45,7 +45,7 @@ Este proyecto automatiza la recopilación de prensa económica española de prim
     npm run dev
     ```
 3.  Abre tu navegador de preferencia e ingresa a:
-    **`http://localhost:3000`**
+    **`http://localhost:3080`**
 
 ---
 
@@ -57,6 +57,8 @@ La app tiene su propio sistema de usuarios (el mismo estándar que ContaMiki): r
 
 La generación de posts e infografías usa la API de Gemini y **cada usuario guarda su propia clave**: menú de usuario → **Mi perfil** → *Clave de Gemini* (se obtiene en Google AI Studio). Se almacena **cifrada** (AES-256-GCM, con una clave derivada de `JWT_SECRET`) en la cuenta del usuario y nunca se devuelve completa. Si cambias `JWT_SECRET`, las sesiones se cierran y cada usuario tendrá que volver a introducir su clave. No hace falta ninguna variable `GEMINI_API_KEY` en el servidor.
 
+El botón **Probar** del perfil comprueba la clave (la que has escrito o, si el campo está vacío, la guardada) y distingue una clave inválida de un servicio saturado. Si Google responde «saturado» (503), la app reintenta y, para las imágenes, prueba otro modelo; si la clave no tiene cuota de imagen se explica en claro. Los modelos de imagen son de pago: la clave debe tener la facturación activada en Google AI Studio.
+
 ### Configuración (variables de entorno)
 
 | Variable | Descripción |
@@ -64,6 +66,9 @@ La generación de posts e infografías usa la API de Gemini y **cada usuario gua
 | `JWT_SECRET` | **Obligatoria**, sin valor por defecto: firma las sesiones y cifra las claves de Gemini. Si falta, la app no arranca. Usa una cadena larga y aleatoria. |
 | `APP_URL` | Dirección pública de la app (p. ej. `https://postlinkedin.midominio.com`); se usa en los enlaces de los correos. |
 | `DATA_DIR` | Carpeta de datos (por defecto `./data`; en Docker, `/usr/src/app/data`, montada como volumen). |
+| `PORT` | Puerto de la app (3080 por defecto). |
+| `GEMINI_IMAGE_SIZE` | Opcional: tamaño de la imagen de IA, `1K`, `2K` (por defecto) o `4K`. |
+| `GEMINI_API_REVISION`, `GEMINI_BASE_URL` | Opcionales, para fijar la revisión de la API de Google o usar otro servidor compatible. |
 
 **Correo** (verificación de cuenta y recuperación de contraseña): configura una de estas dos formas. Si defines las dos, se usa el servicio central.
 
@@ -77,6 +82,7 @@ La generación de posts e infografías usa la API de Gemini y **cada usuario gua
 
 *   `server.js`: Servidor en Express con los endpoints REST: lectura de prensa por RSS en tiempo real (botón «Actualizar Prensa»), generación con Gemini y propuestas de cada usuario.
 *   `auth.js` y `mailer.js`: usuarios (registro, acceso, 2FA, recuperación, clave de Gemini cifrada) y envío de correo.
+*   `imagen.js`: infografía ilustrada con IA (Interactions API de Gemini, reintentos y cascada de modelos). `noticias.js`: lectura de prensa, fuentes por usuario y noticia por enlace. `ranking.js`: orden de las noticias por impacto.
 *   `sources.json`: Lista de diarios y feeds RSS de economía (puedes añadir o modificar fuentes aquí).
 *   `data/` (volumen, no está en el repositorio): `users.json` y una carpeta por usuario con sus propuestas (`YYYY-MM-DD.json`).
 *   `public/`: Código fuente de la interfaz web.
@@ -84,6 +90,9 @@ La generación de posts e infografías usa la API de Gemini y **cada usuario gua
     *   `style.css`: Estilo del panel de control y lienzo de la infografía.
     *   `app.js`: Sincronización en tiempo real y lógica de exportación a PNG.
     *   `auth.js` y `auth.css`: pantallas de acceso, perfil y menú de usuario.
+    *   `news.js` y `news.css`: sección de noticias (búsqueda, filtros, fuentes y noticia por enlace). `infographic.css`: lienzo de la infografía.
+
+**En el móvil:** zoom con la pinza permitido y deslizar hacia abajo desde arriba para actualizar.
 
 ---
 
